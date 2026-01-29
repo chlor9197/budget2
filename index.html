@@ -45,7 +45,7 @@
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
-<body class="bg-[#FFF0F5] text-slate-700 pb-24 transition-colors duration-300 dark:bg-dark-bg dark:text-dark-text selection:bg-pink-200 dark:selection:bg-pink-900">
+<body class="bg-[#FFF0F5] text-slate-700 pb-24 transition-colors duration-300 dark:bg-dark-bg dark:text-dark-text selection:bg-pink-200 dark:selection:bg-pink-900 flex justify-center min-h-screen">
 
     <!-- 登入/註冊 遮罩頁面 -->
     <div id="auth-overlay" class="fixed inset-0 z-[100] bg-[#FFF0F5] dark:bg-dark-bg flex flex-col items-center justify-center p-6 animate-fade-in hidden">
@@ -66,240 +66,252 @@
         </div>
     </div>
 
-    <!-- 頂部導航 -->
-    <div class="sticky top-0 z-30 bg-white/80 dark:bg-dark-card/80 backdrop-blur-md shadow-sm px-4 py-3 flex items-center justify-between transition-colors duration-300">
-        <div class="flex flex-col flex-1">
-            <div class="flex items-center space-x-1 cursor-pointer" id="title-container">
-                <h1 id="app-title-display" class="text-sm font-bold text-pink-800 dark:text-pink-300 truncate max-w-[150px]">載入中...</h1>
-                <input id="app-title-input" class="hidden w-32 bg-pink-50 dark:bg-slate-700 border border-pink-200 rounded px-1 text-sm font-bold text-pink-800 dark:text-pink-200 outline-none" />
-                <i data-lucide="edit-2" class="w-3 h-3 text-pink-300"></i>
-                <button id="save-title-btn" class="hidden p-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full hover:bg-green-200 ml-1 transition-colors"><i data-lucide="check" class="w-3 h-3"></i></button>
-            </div>
-            <!-- 月份導航 (含選擇器) -->
-            <div class="flex items-center space-x-2 mt-1 relative">
-                <button id="prev-month-btn" class="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors"><i data-lucide="chevron-left" class="w-4 h-4 text-slate-500 dark:text-slate-400"></i></button>
-                <div class="relative">
-                    <span id="current-month-display" class="text-lg font-black text-slate-700 dark:text-white leading-none cursor-pointer hover:text-pink-500 transition-colors">2026年 1月</span>
-                    <input type="month" id="month-picker" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+    <!-- 主要容器 (適應尺寸) -->
+    <div class="w-full max-w-lg min-h-screen relative bg-[#FFF0F5] dark:bg-dark-bg transition-colors duration-300 shadow-2xl">
+
+        <!-- 頂部導航 -->
+        <div class="sticky top-0 z-30 bg-white/80 dark:bg-dark-card/80 backdrop-blur-md shadow-sm px-4 py-3 flex items-center justify-between transition-colors duration-300">
+            <div class="flex flex-col flex-1">
+                <div class="flex items-center space-x-1 cursor-pointer" id="title-container">
+                    <h1 id="app-title-display" class="text-base font-bold text-pink-800 dark:text-pink-300 truncate max-w-[200px]">載入中...</h1>
+                    <input id="app-title-input" class="hidden w-32 bg-pink-50 dark:bg-slate-700 border border-pink-200 rounded px-1 text-sm font-bold text-pink-800 dark:text-pink-200 outline-none" />
+                    <i data-lucide="edit-2" class="w-3 h-3 text-pink-300"></i>
+                    <button id="save-title-btn" class="hidden p-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full hover:bg-green-200 ml-1 transition-colors"><i data-lucide="check" class="w-3 h-3"></i></button>
                 </div>
-                <button id="next-month-btn" class="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors"><i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 dark:text-slate-400"></i></button>
+                <!-- 月份導航 (含選擇器) -->
+                <div class="flex items-center space-x-2 mt-1 relative">
+                    <button id="prev-month-btn" class="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors"><i data-lucide="chevron-left" class="w-4 h-4 text-slate-500 dark:text-slate-400"></i></button>
+                    <div class="relative group">
+                        <span id="current-month-display" class="text-xl font-black text-slate-700 dark:text-white leading-none cursor-pointer group-hover:text-pink-500 transition-colors">2026年 1月</span>
+                        <input type="month" id="month-picker" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                    </div>
+                    <button id="next-month-btn" class="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors"><i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 dark:text-slate-400"></i></button>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2 ml-2">
+                <button id="refresh-btn" class="p-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 rounded-full text-slate-500 dark:text-slate-300 transition-colors"><i data-lucide="refresh-cw" class="w-5 h-5"></i></button>
+                <button id="theme-btn" class="p-2 bg-indigo-100 dark:bg-yellow-900/30 hover:bg-indigo-200 rounded-full text-indigo-600 dark:text-yellow-300 transition-colors"><i data-lucide="moon" class="w-5 h-5 dark:hidden"></i><i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i></button>
+                <button id="logout-btn" class="p-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 rounded-full text-slate-500 dark:text-slate-300 transition-colors" title="登出"><i data-lucide="log-out" class="w-5 h-5"></i></button>
             </div>
         </div>
-        <div class="flex items-center space-x-2 ml-2">
-            <button id="refresh-btn" class="p-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 rounded-full text-slate-500 dark:text-slate-300 transition-colors"><i data-lucide="refresh-cw" class="w-5 h-5"></i></button>
-            <button id="theme-btn" class="p-2 bg-indigo-100 dark:bg-yellow-900/30 hover:bg-indigo-200 rounded-full text-indigo-600 dark:text-yellow-300 transition-colors"><i data-lucide="moon" class="w-5 h-5 dark:hidden"></i><i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i></button>
-            <button id="logout-btn" class="p-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 rounded-full text-slate-500 dark:text-slate-300 transition-colors" title="登出"><i data-lucide="log-out" class="w-5 h-5"></i></button>
+
+        <!-- 雲端狀態條 -->
+        <div class="px-4 pt-2 flex justify-end">
+            <div id="cloud-status" class="flex items-center space-x-1 px-2 py-0.5 bg-white/50 dark:bg-slate-800/50 rounded-full text-[10px] transition-colors cursor-pointer border border-transparent">
+                <i data-lucide="cloud" class="w-3 h-3 text-slate-400"></i><span class="text-slate-400">連線中</span>
+            </div>
         </div>
-    </div>
 
-    <!-- 雲端狀態條 -->
-    <div class="px-4 pt-2 flex justify-end">
-        <div id="cloud-status" class="flex items-center space-x-1 px-2 py-0.5 bg-white/50 dark:bg-slate-800/50 rounded-full text-[10px] transition-colors cursor-pointer border border-transparent">
-            <i data-lucide="cloud" class="w-3 h-3 text-slate-400"></i><span class="text-slate-400">連線中</span>
-        </div>
-    </div>
+        <div class="p-4 space-y-5">
 
-    <div class="max-w-md mx-auto p-4 space-y-5">
-
-        <!-- 河馬心情與總覽 -->
-        <div class="bg-white dark:bg-dark-card p-5 rounded-3xl shadow-sm border border-pink-100 dark:border-slate-700 relative overflow-hidden transition-colors duration-300">
-            <div class="absolute -right-6 -top-6 w-32 h-32 bg-pink-50 dark:bg-slate-700 rounded-full opacity-50 blur-2xl"></div>
-            <div class="flex items-center justify-between mb-4 relative z-10">
-                <div class="flex items-center space-x-3">
-                    <div id="hippo-avatar" class="text-4xl animate-bounce-slow cursor-pointer" title="河馬心情">🦛</div>
-                    <div>
-                        <div id="hippo-msg" class="text-xs font-bold text-slate-500 dark:text-slate-400">河馬正在計算...</div>
-                        <div class="flex items-baseline space-x-1">
-                            <span class="text-xs text-slate-400 dark:text-slate-500">預算剩餘</span>
-                            <span id="total-remaining-display" class="text-2xl font-extrabold text-slate-700 dark:text-white">0</span>
+            <!-- 河馬心情與總覽 -->
+            <div class="bg-white dark:bg-dark-card p-5 rounded-3xl shadow-sm border border-pink-100 dark:border-slate-700 relative overflow-hidden transition-colors duration-300">
+                <div class="absolute -right-6 -top-6 w-32 h-32 bg-pink-50 dark:bg-slate-700 rounded-full opacity-50 blur-2xl"></div>
+                <div class="flex items-center justify-between mb-4 relative z-10">
+                    <div class="flex items-center space-x-3">
+                        <div id="hippo-avatar" class="text-5xl animate-bounce-slow cursor-pointer" title="河馬心情">🦛</div>
+                        <div>
+                            <div id="hippo-msg" class="text-sm font-bold text-slate-500 dark:text-slate-400">河馬正在計算...</div>
+                            <div class="flex items-baseline space-x-1">
+                                <span class="text-xs text-slate-400 dark:text-slate-500">本月剩餘</span>
+                                <span id="total-remaining-display" class="text-3xl font-extrabold text-slate-700 dark:text-white">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 收入設定入口 -->
+                    <div class="text-right group cursor-pointer" onclick="openIncomeModal()">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase">本月收入 <i data-lucide="edit-3" class="inline w-3 h-3 ml-1 opacity-50"></i></div>
+                        <div class="flex items-center justify-end">
+                            <span class="text-sm font-bold text-slate-600 dark:text-slate-300 mr-1">$</span>
+                            <span id="income-display" class="text-2xl font-extrabold text-slate-700 dark:text-slate-200">0</span>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="relative z-10">
-                <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-1">
-                    <span>支出進度</span><span id="total-spent-percent">0%</span>
-                </div>
-                <div class="w-full h-3 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div id="main-progress-bar" class="h-full rounded-full bg-gradient-to-r from-pink-300 to-pink-500 transition-all duration-700" style="width: 0%"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 功能切換 Tab -->
-        <div class="flex p-1 bg-white dark:bg-dark-card rounded-xl border border-slate-100 dark:border-slate-700 overflow-x-auto hide-scrollbar">
-            <button class="view-tab flex-1 py-2 px-3 text-xs font-bold rounded-lg transition-all whitespace-nowrap" data-view="assets">資產</button>
-            <button class="view-tab flex-1 py-2 px-3 text-xs font-bold rounded-lg transition-all whitespace-nowrap" data-view="list">預算</button>
-            <button class="view-tab flex-1 py-2 px-3 text-xs font-bold rounded-lg transition-all whitespace-nowrap" data-view="ledger">明細</button>
-            <button class="view-tab flex-1 py-2 px-3 text-xs font-bold rounded-lg transition-all whitespace-nowrap" data-view="calendar">日曆</button>
-        </div>
-
-        <!-- 內容區域 -->
-        <div id="content-area" class="min-h-[300px]">
-            
-            <!-- 0. 資產視圖 (Assets) -->
-            <div id="view-assets" class="hidden animate-slide-up space-y-4">
-                <div class="flex justify-between items-center px-1">
-                    <h2 class="text-sm font-bold text-slate-500 dark:text-slate-400">我的帳戶/卡片</h2>
-                    <button onclick="openAccountModal()" class="text-xs font-bold text-pink-500 hover:text-pink-600 flex items-center"><i data-lucide="plus-circle" class="w-3 h-3 mr-1"></i> 新增</button>
-                </div>
-                <div id="accounts-list" class="space-y-3"></div>
-                <button onclick="openTransferModal()" class="w-full py-3 bg-slate-800 dark:bg-slate-700 text-white rounded-xl shadow-lg flex items-center justify-center font-bold text-sm hover:bg-slate-700">
-                    <i data-lucide="arrow-right-left" class="w-4 h-4 mr-2"></i> 帳戶轉帳
-                </button>
-            </div>
-
-            <!-- 1. 預算列表視圖 (Budget) -->
-            <div id="view-list" class="hidden animate-slide-up space-y-4">
-                <div class="bg-white dark:bg-dark-card p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex justify-center h-48">
-                    <canvas id="budgetChart"></canvas>
-                </div>
-                <div class="flex items-center justify-between px-1">
-                    <h2 class="text-sm font-bold text-slate-500 dark:text-slate-400">類別預算與剩餘</h2>
-                    <button onclick="openModal()" class="text-xs font-bold text-pink-500 hover:text-pink-600 flex items-center"><i data-lucide="plus-circle" class="w-3 h-3 mr-1"></i> 新增類別</button>
-                </div>
-                <div id="category-list" class="space-y-3 pb-20"></div>
-            </div>
-
-            <!-- 2. 收支明細視圖 (Ledger) -->
-            <div id="view-ledger" class="hidden animate-slide-up space-y-3">
-                <div class="flex justify-between items-center px-1 mb-2">
-                    <h2 class="text-sm font-bold text-slate-500 dark:text-slate-400">本月明細</h2>
-                    <div class="flex space-x-2">
-                        <button onclick="openFixedExpenseModal()" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded-lg font-bold flex items-center"><i data-lucide="repeat" class="w-3 h-3 mr-1"></i> 固定支出</button>
-                        <div class="text-xs text-slate-400 flex items-center">
-                            <span class="text-green-500 font-bold mr-1" id="ledger-income-total">$0</span> / <span class="text-red-500 font-bold ml-1" id="ledger-expense-total">$0</span>
-                        </div>
+                <div class="relative z-10">
+                    <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-1">
+                        <span>支出進度</span><span id="total-spent-percent">0%</span>
+                    </div>
+                    <div class="w-full h-3 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                        <div id="main-progress-bar" class="h-full rounded-full bg-gradient-to-r from-pink-300 to-pink-500 transition-all duration-700" style="width: 0%"></div>
                     </div>
                 </div>
-                <div id="ledger-list" class="space-y-2 pb-20"></div>
             </div>
 
-            <!-- 3. 日曆視圖 -->
-            <div id="view-calendar" class="hidden animate-slide-up bg-white dark:bg-dark-card rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-3">
-                <div class="grid grid-cols-7 text-center mb-2 text-xs font-bold text-slate-400">
-                    <div class="text-red-400">日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
+            <!-- 功能切換 Tab -->
+            <div class="flex p-1 bg-white dark:bg-dark-card rounded-xl border border-slate-100 dark:border-slate-700 overflow-x-auto hide-scrollbar">
+                <button class="view-tab flex-1 py-2 px-4 text-sm font-bold rounded-lg transition-all whitespace-nowrap" data-view="assets">資產</button>
+                <button class="view-tab flex-1 py-2 px-4 text-sm font-bold rounded-lg transition-all whitespace-nowrap" data-view="list">預算</button>
+                <button class="view-tab flex-1 py-2 px-4 text-sm font-bold rounded-lg transition-all whitespace-nowrap" data-view="ledger">明細</button>
+                <button class="view-tab flex-1 py-2 px-4 text-sm font-bold rounded-lg transition-all whitespace-nowrap" data-view="calendar">日曆</button>
+            </div>
+
+            <!-- 內容區域 -->
+            <div id="content-area" class="min-h-[400px]">
+                
+                <!-- 0. 資產視圖 (Assets) -->
+                <div id="view-assets" class="hidden animate-slide-up space-y-4">
+                    <div class="flex justify-between items-center px-1">
+                        <h2 class="text-sm font-bold text-slate-500 dark:text-slate-400">我的帳戶/卡片</h2>
+                        <button onclick="openAccountModal()" class="text-xs font-bold text-pink-500 hover:text-pink-600 flex items-center bg-pink-50 px-2 py-1 rounded-lg dark:bg-pink-900/20"><i data-lucide="plus-circle" class="w-3 h-3 mr-1"></i> 新增</button>
+                    </div>
+                    <div id="accounts-list" class="space-y-3"></div>
+                    <button onclick="openTransferModal()" class="w-full py-3 bg-slate-800 dark:bg-slate-700 text-white rounded-xl shadow-lg flex items-center justify-center font-bold text-sm hover:bg-slate-700">
+                        <i data-lucide="arrow-right-left" class="w-4 h-4 mr-2"></i> 帳戶轉帳
+                    </button>
                 </div>
-                <div id="calendar-grid" class="grid grid-cols-7 gap-1"></div>
-            </div>
-        </div>
-    </div>
 
-    <!-- FAB -->
-    <div class="fixed bottom-6 right-6 flex flex-col space-y-3 z-40">
-        <button onclick="openIncomeModal()" class="w-12 h-12 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110 active:scale-95" title="記收入">
-            <i data-lucide="arrow-down" class="w-6 h-6"></i>
-        </button>
-        <button onclick="openExpenseModal()" class="w-14 h-14 bg-gradient-to-tr from-pink-500 to-rose-400 hover:from-pink-600 hover:to-rose-500 text-white rounded-full shadow-xl flex items-center justify-center transition-transform hover:scale-110 active:scale-95" title="記支出">
-            <i data-lucide="plus" class="w-8 h-8"></i>
-        </button>
-    </div>
-
-    <!-- Modals (共用樣式) -->
-    <!-- 1. 收入 Modal -->
-    <div id="income-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm hidden">
-        <div class="bg-white dark:bg-dark-card w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-slide-up transition-colors duration-300" onclick="event.stopPropagation()">
-            <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-4">記一筆收入</h2>
-            <div class="space-y-4">
-                <div><label class="text-xs font-bold text-slate-400 uppercase">存入帳戶</label><select id="income-account" class="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-none outline-none dark:text-white font-bold"></select></div>
-                <div><label class="text-xs font-bold text-slate-400 uppercase">項目名稱</label><input type="text" id="income-name" placeholder="例如: 薪水" class="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-none outline-none dark:text-white"></div>
-                <div><label class="text-xs font-bold text-slate-400 uppercase">金額</label><input type="number" id="income-amount" placeholder="0" class="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-none outline-none dark:text-white font-bold text-2xl"></div>
-                <div><label class="text-xs font-bold text-slate-400 uppercase">日期</label><input type="date" id="income-date" class="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-none outline-none dark:text-white"></div>
-            </div>
-            <div class="flex gap-3 mt-8">
-                <button onclick="document.getElementById('income-modal').classList.add('hidden')" class="flex-1 py-3 text-slate-500 bg-slate-100 rounded-xl">取消</button>
-                <button id="income-save-btn" class="flex-[2] py-3 text-white font-bold bg-green-500 hover:bg-green-600 rounded-xl shadow-lg">儲存收入</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 2. 支出 Modal -->
-    <div id="expense-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm hidden">
-        <div class="bg-white dark:bg-dark-card w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-slide-up transition-colors duration-300" onclick="event.stopPropagation()">
-            <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-6 flex items-center"><span class="bg-pink-100 dark:bg-pink-900 p-2 rounded-full mr-2 text-lg">💸</span> 記一筆支出</h2>
-            <div class="space-y-4">
-                <div><label class="text-xs font-bold text-slate-400 uppercase">扣款帳戶</label><select id="expense-account" class="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-none outline-none dark:text-white font-bold"></select></div>
-                <div><label class="text-xs font-bold text-slate-400 uppercase">日期</label><input type="date" id="expense-date" class="w-full mt-1 p-2 bg-slate-50 dark:bg-slate-800 rounded-xl border-none outline-none dark:text-white font-bold text-slate-700"></div>
-                <div><label class="text-xs font-bold text-slate-400 uppercase">金額</label><div class="relative mt-1"><span class="absolute left-3 top-3 text-slate-400 font-bold">$</span><input type="number" id="expense-amount" placeholder="0" class="w-full p-3 pl-7 bg-slate-50 dark:bg-slate-800 rounded-xl border-none outline-none font-bold dark:text-white text-2xl" autoFocus></div></div>
-                <div><label class="text-xs font-bold text-slate-400 uppercase">類別 (顯示本月剩餘)</label><div id="expense-category-picker" class="grid grid-cols-3 gap-2 mt-2"></div></div>
-                <div><label class="text-xs font-bold text-slate-400 uppercase">備註</label><input type="text" id="expense-note" placeholder="備註..." class="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-none outline-none dark:text-white"></div>
-            </div>
-            <div class="flex gap-3 mt-8">
-                <button onclick="document.getElementById('expense-modal').classList.add('hidden')" class="flex-1 py-3 text-slate-500 bg-slate-100 rounded-xl">取消</button>
-                <button id="expense-save-btn" class="flex-[2] py-3 text-white font-bold bg-slate-800 hover:bg-slate-900 rounded-xl shadow-lg">儲存</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 3. 固定支出 Modal -->
-    <div id="fixed-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm hidden">
-        <div class="bg-white dark:bg-dark-card w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-slide-up h-[70vh] flex flex-col" onclick="event.stopPropagation()">
-            <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-4">每月固定支出管理</h2>
-            <div class="flex space-x-2 mb-4">
-                <input type="text" id="fix-name" placeholder="名稱 (例: 房租)" class="flex-1 p-2 bg-slate-50 dark:bg-slate-800 rounded-xl text-sm dark:text-white">
-                <input type="number" id="fix-amount" placeholder="$" class="w-20 p-2 bg-slate-50 dark:bg-slate-800 rounded-xl text-sm dark:text-white">
-                <button id="add-fix-btn" class="bg-indigo-500 text-white p-2 rounded-xl"><i data-lucide="plus" class="w-5 h-5"></i></button>
-            </div>
-            <div id="fixed-list" class="flex-1 overflow-y-auto space-y-2 mb-4 pr-1 hide-scrollbar"></div>
-            <button id="apply-fixed-btn" class="w-full py-3 text-white font-bold bg-pink-500 rounded-xl shadow-lg mb-2">匯入本月</button>
-            <button onclick="document.getElementById('fixed-modal').classList.add('hidden')" class="w-full py-3 text-slate-500 bg-slate-100 rounded-xl">關閉</button>
-        </div>
-    </div>
-
-    <!-- 4. 轉帳 Modal -->
-    <div id="transfer-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm hidden">
-        <div class="bg-white dark:bg-dark-card w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-slide-up" onclick="event.stopPropagation()">
-            <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-4">帳戶轉帳</h2>
-            <div class="space-y-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex-1"><label class="text-xs text-slate-400">從</label><select id="trans-from" class="w-full p-2 bg-slate-50 rounded-xl dark:bg-slate-800 dark:text-white font-bold"></select></div>
-                    <i data-lucide="arrow-right" class="mx-2 mt-4 text-slate-400"></i>
-                    <div class="flex-1"><label class="text-xs text-slate-400">轉入</label><select id="trans-to" class="w-full p-2 bg-slate-50 rounded-xl dark:bg-slate-800 dark:text-white font-bold"></select></div>
+                <!-- 1. 預算列表視圖 (Budget) -->
+                <div id="view-list" class="hidden animate-slide-up space-y-4">
+                    <div class="bg-white dark:bg-dark-card p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex justify-center h-56 relative">
+                        <canvas id="budgetChart" class="w-full h-full"></canvas>
+                    </div>
+                    <div class="flex items-center justify-between px-1">
+                        <h2 class="text-sm font-bold text-slate-500 dark:text-slate-400">類別預算與剩餘</h2>
+                        <button onclick="openModal()" class="text-xs font-bold text-pink-500 hover:text-pink-600 flex items-center bg-pink-50 px-2 py-1 rounded-lg dark:bg-pink-900/20"><i data-lucide="plus-circle" class="w-3 h-3 mr-1"></i> 新增類別</button>
+                    </div>
+                    <div id="category-list" class="space-y-3 pb-24"></div>
                 </div>
-                <div><label class="text-xs text-slate-400">金額</label><input type="number" id="trans-amount" placeholder="0" class="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-2xl dark:text-white"></div>
-                <div><label class="text-xs text-slate-400">備註</label><input type="text" id="trans-note" placeholder="例如: 存錢" class="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl dark:text-white"></div>
-            </div>
-            <div class="flex gap-3 mt-8">
-                <button onclick="document.getElementById('transfer-modal').classList.add('hidden')" class="flex-1 py-3 text-slate-500 bg-slate-100 rounded-xl">取消</button>
-                <button id="trans-save-btn" class="flex-[2] py-3 text-white font-bold bg-indigo-600 rounded-xl shadow-lg">確認轉帳</button>
+
+                <!-- 2. 收支明細視圖 (Ledger) -->
+                <div id="view-ledger" class="hidden animate-slide-up space-y-3">
+                    <div class="flex justify-between items-center px-1 mb-2">
+                        <h2 class="text-sm font-bold text-slate-500 dark:text-slate-400">本月明細</h2>
+                        <div class="flex space-x-2">
+                            <button onclick="openFixedExpenseModal()" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded-lg font-bold flex items-center"><i data-lucide="repeat" class="w-3 h-3 mr-1"></i> 固定支出</button>
+                            <div class="text-xs text-slate-400 flex items-center">
+                                <span class="text-green-500 font-bold mr-1" id="ledger-income-total">$0</span> / <span class="text-red-500 font-bold ml-1" id="ledger-expense-total">$0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="ledger-list" class="space-y-2 pb-24"></div>
+                </div>
+
+                <!-- 3. 日曆視圖 -->
+                <div id="view-calendar" class="hidden animate-slide-up bg-white dark:bg-dark-card rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-3">
+                    <div class="grid grid-cols-7 text-center mb-2 text-xs font-bold text-slate-400">
+                        <div class="text-red-400">日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
+                    </div>
+                    <div id="calendar-grid" class="grid grid-cols-7 gap-1"></div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- 5. 帳戶新增 Modal -->
-    <div id="account-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm hidden">
-        <div class="bg-white dark:bg-dark-card w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-pop-in">
-            <h2 class="text-xl font-bold mb-4 dark:text-white">新增帳戶/卡片</h2>
-            <input type="text" id="acc-name" placeholder="名稱 (例: 股票帳戶)" class="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl mb-4 dark:text-white">
-            <div class="flex gap-2 mb-4">
-                <button class="acc-type-btn flex-1 p-2 border rounded-xl text-xs font-bold bg-pink-50 border-pink-500 text-pink-600" data-type="general">一般</button>
-                <button class="acc-type-btn flex-1 p-2 border rounded-xl text-xs font-bold border-slate-200 text-slate-400" data-type="savings">儲蓄</button>
-                <button class="acc-type-btn flex-1 p-2 border rounded-xl text-xs font-bold border-slate-200 text-slate-400" data-type="invest">投資</button>
-            </div>
-            <input type="number" id="acc-init" placeholder="初始餘額" class="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl mb-6 dark:text-white">
-            <div class="flex gap-3">
-                <button onclick="document.getElementById('account-modal').classList.add('hidden')" class="flex-1 py-3 bg-slate-100 text-slate-500 rounded-xl">取消</button>
-                <button id="acc-save-btn" class="flex-[2] py-3 bg-slate-800 text-white rounded-xl font-bold">建立</button>
+        <!-- FAB -->
+        <div class="fixed bottom-6 right-6 flex flex-col space-y-3 z-40">
+            <button onclick="openIncomeModal()" class="w-12 h-12 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110 active:scale-95" title="記收入">
+                <i data-lucide="arrow-down" class="w-6 h-6"></i>
+            </button>
+            <button onclick="openExpenseModal()" class="w-14 h-14 bg-gradient-to-tr from-pink-500 to-rose-400 hover:from-pink-600 hover:to-rose-500 text-white rounded-full shadow-xl flex items-center justify-center transition-transform hover:scale-110 active:scale-95" title="記支出">
+                <i data-lucide="plus" class="w-8 h-8"></i>
+            </button>
+        </div>
+
+        <!-- Modals -->
+        <!-- 1. 收入 Modal -->
+        <div id="income-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm hidden">
+            <div class="bg-white dark:bg-dark-card w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-slide-up transition-colors duration-300" onclick="event.stopPropagation()">
+                <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-4">記一筆收入</h2>
+                <div class="space-y-4">
+                    <div><label class="text-xs font-bold text-slate-400 uppercase">存入帳戶</label><select id="income-account" class="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-none outline-none dark:text-white font-bold"></select></div>
+                    <div><label class="text-xs font-bold text-slate-400 uppercase">項目名稱</label><input type="text" id="income-name" placeholder="例如: 薪水" class="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-none outline-none dark:text-white"></div>
+                    <div><label class="text-xs font-bold text-slate-400 uppercase">金額</label><input type="number" id="income-amount" placeholder="0" class="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-none outline-none dark:text-white font-bold text-2xl"></div>
+                    <div><label class="text-xs font-bold text-slate-400 uppercase">日期</label><input type="date" id="income-date" class="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-none outline-none dark:text-white"></div>
+                </div>
+                <div class="flex gap-3 mt-8">
+                    <button onclick="document.getElementById('income-modal').classList.add('hidden')" class="flex-1 py-3 text-slate-500 bg-slate-100 rounded-xl">取消</button>
+                    <button id="income-save-btn" class="flex-[2] py-3 text-white font-bold bg-green-500 hover:bg-green-600 rounded-xl shadow-lg">儲存收入</button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- 6. 類別詳情 -->
-    <div id="category-detail-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 hidden">
-        <div class="bg-white dark:bg-dark-card w-full max-w-sm rounded-t-3xl p-6 shadow-2xl h-[70vh] flex flex-col">
-            <div class="flex justify-between items-center mb-4"><h2 id="detail-title" class="text-xl font-bold dark:text-white"></h2><button id="detail-edit-btn" class="text-xs bg-slate-100 px-3 py-1 rounded-full">修改</button></div>
-            <div id="detail-subtitle" class="text-xs text-slate-400 mb-2"></div>
-            <div id="detail-list" class="flex-1 overflow-y-auto space-y-2 hide-scrollbar"></div>
-            <button onclick="document.getElementById('category-detail-modal').classList.add('hidden')" class="mt-2 w-full py-3 bg-slate-100 rounded-xl">關閉</button>
+        <!-- 2. 支出 Modal -->
+        <div id="expense-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm hidden">
+            <div class="bg-white dark:bg-dark-card w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-slide-up transition-colors duration-300" onclick="event.stopPropagation()">
+                <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-6 flex items-center"><span class="bg-pink-100 dark:bg-pink-900 p-2 rounded-full mr-2 text-lg">💸</span> 記一筆支出</h2>
+                <div class="space-y-4">
+                    <div><label class="text-xs font-bold text-slate-400 uppercase">扣款帳戶</label><select id="expense-account" class="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-none outline-none dark:text-white font-bold"></select></div>
+                    <div><label class="text-xs font-bold text-slate-400 uppercase">日期</label><input type="date" id="expense-date" class="w-full mt-1 p-2 bg-slate-50 dark:bg-slate-800 rounded-xl border-none outline-none dark:text-white font-bold text-slate-700"></div>
+                    <div><label class="text-xs font-bold text-slate-400 uppercase">金額</label><div class="relative mt-1"><span class="absolute left-3 top-3 text-slate-400 font-bold">$</span><input type="number" id="expense-amount" placeholder="0" class="w-full p-3 pl-7 bg-slate-50 dark:bg-slate-800 rounded-xl border-none outline-none font-bold dark:text-white text-2xl" autoFocus></div></div>
+                    <div><label class="text-xs font-bold text-slate-400 uppercase">類別 (顯示本月剩餘)</label><div id="expense-category-picker" class="grid grid-cols-3 gap-2 mt-2"></div></div>
+                    <div><label class="text-xs font-bold text-slate-400 uppercase">備註</label><input type="text" id="expense-note" placeholder="備註..." class="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-none outline-none dark:text-white"></div>
+                </div>
+                <div class="flex gap-3 mt-8">
+                    <button onclick="document.getElementById('expense-modal').classList.add('hidden')" class="flex-1 py-3 text-slate-500 bg-slate-100 rounded-xl">取消</button>
+                    <button id="expense-save-btn" class="flex-[2] py-3 text-white font-bold bg-slate-800 hover:bg-slate-900 rounded-xl shadow-lg">儲存</button>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <!-- 7. 編輯預算 Modal -->
-    <div id="modal" class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/40 hidden">
-        <div class="bg-white dark:bg-dark-card w-full max-w-sm rounded-t-3xl p-6 shadow-2xl animate-pop-in">
-            <h2 id="modal-title" class="text-xl font-bold mb-4 dark:text-white">設定類別</h2>
-            <div class="space-y-3"><input id="modal-name" class="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl"><input id="modal-amount" type="number" class="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl"><div id="color-picker" class="flex gap-2 overflow-x-auto pb-2"></div><div id="icon-picker" class="flex gap-3 overflow-x-auto pb-2"></div></div>
-            <div class="flex gap-3 mt-6"><button id="modal-delete-btn" class="hidden p-3 bg-red-50 text-red-400 rounded-xl"><i data-lucide="trash-2" class="w-5 h-5"></i></button><button id="modal-cancel-btn" class="flex-1 bg-slate-100 rounded-xl">取消</button><button id="modal-save-btn" class="flex-[2] bg-slate-800 text-white rounded-xl">儲存</button></div>
+        <!-- 3. 固定支出 Modal -->
+        <div id="fixed-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm hidden">
+            <div class="bg-white dark:bg-dark-card w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-slide-up h-[70vh] flex flex-col" onclick="event.stopPropagation()">
+                <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-4">每月固定支出管理</h2>
+                <div class="flex space-x-2 mb-4">
+                    <input type="text" id="fix-name" placeholder="名稱 (例: 房租)" class="flex-1 p-2 bg-slate-50 dark:bg-slate-800 rounded-xl text-sm dark:text-white">
+                    <input type="number" id="fix-amount" placeholder="$" class="w-20 p-2 bg-slate-50 dark:bg-slate-800 rounded-xl text-sm dark:text-white">
+                    <button id="add-fix-btn" class="bg-indigo-500 text-white p-2 rounded-xl"><i data-lucide="plus" class="w-5 h-5"></i></button>
+                </div>
+                <div id="fixed-list" class="flex-1 overflow-y-auto space-y-2 mb-4 pr-1 hide-scrollbar"></div>
+                <button id="apply-fixed-btn" class="w-full py-3 text-white font-bold bg-pink-500 rounded-xl shadow-lg mb-2">匯入本月</button>
+                <button onclick="document.getElementById('fixed-modal').classList.add('hidden')" class="w-full py-3 text-slate-500 bg-slate-100 rounded-xl">關閉</button>
+            </div>
+        </div>
+
+        <!-- 4. 轉帳 Modal -->
+        <div id="transfer-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm hidden">
+            <div class="bg-white dark:bg-dark-card w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-slide-up" onclick="event.stopPropagation()">
+                <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-4">帳戶轉帳</h2>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1"><label class="text-xs text-slate-400">從</label><select id="trans-from" class="w-full p-2 bg-slate-50 rounded-xl dark:bg-slate-800 dark:text-white font-bold"></select></div>
+                        <i data-lucide="arrow-right" class="mx-2 mt-4 text-slate-400"></i>
+                        <div class="flex-1"><label class="text-xs text-slate-400">轉入</label><select id="trans-to" class="w-full p-2 bg-slate-50 rounded-xl dark:bg-slate-800 dark:text-white font-bold"></select></div>
+                    </div>
+                    <div><label class="text-xs text-slate-400">金額</label><input type="number" id="trans-amount" placeholder="0" class="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-2xl dark:text-white"></div>
+                    <div><label class="text-xs text-slate-400">備註</label><input type="text" id="trans-note" placeholder="例如: 存錢" class="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl dark:text-white"></div>
+                </div>
+                <div class="flex gap-3 mt-8">
+                    <button onclick="document.getElementById('transfer-modal').classList.add('hidden')" class="flex-1 py-3 text-slate-500 bg-slate-100 rounded-xl">取消</button>
+                    <button id="trans-save-btn" class="flex-[2] py-3 text-white font-bold bg-indigo-600 rounded-xl shadow-lg">確認轉帳</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. 帳戶新增 Modal -->
+        <div id="account-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm hidden">
+            <div class="bg-white dark:bg-dark-card w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-pop-in">
+                <h2 class="text-xl font-bold mb-4 dark:text-white">新增帳戶/卡片</h2>
+                <input type="text" id="acc-name" placeholder="名稱 (例: 股票帳戶)" class="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl mb-4 dark:text-white">
+                <div class="flex gap-2 mb-4">
+                    <button class="acc-type-btn flex-1 p-2 border rounded-xl text-xs font-bold bg-pink-50 border-pink-500 text-pink-600" data-type="general">一般</button>
+                    <button class="acc-type-btn flex-1 p-2 border rounded-xl text-xs font-bold border-slate-200 text-slate-400" data-type="savings">儲蓄</button>
+                    <button class="acc-type-btn flex-1 p-2 border rounded-xl text-xs font-bold border-slate-200 text-slate-400" data-type="invest">投資</button>
+                </div>
+                <input type="number" id="acc-init" placeholder="初始餘額" class="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl mb-6 dark:text-white">
+                <div class="flex gap-3">
+                    <button onclick="document.getElementById('account-modal').classList.add('hidden')" class="flex-1 py-3 bg-slate-100 text-slate-500 rounded-xl">取消</button>
+                    <button id="acc-save-btn" class="flex-[2] py-3 bg-slate-800 text-white rounded-xl font-bold">建立</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. 類別詳情 -->
+        <div id="category-detail-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 hidden">
+            <div class="bg-white dark:bg-dark-card w-full max-w-sm rounded-t-3xl p-6 shadow-2xl h-[70vh] flex flex-col">
+                <div class="flex justify-between items-center mb-4"><h2 id="detail-title" class="text-xl font-bold dark:text-white"></h2><button id="detail-edit-btn" class="text-xs bg-slate-100 px-3 py-1 rounded-full">修改</button></div>
+                <div id="detail-subtitle" class="text-xs text-slate-400 mb-2"></div>
+                <div id="detail-list" class="flex-1 overflow-y-auto space-y-2 hide-scrollbar"></div>
+                <button onclick="document.getElementById('category-detail-modal').classList.add('hidden')" class="mt-2 w-full py-3 bg-slate-100 rounded-xl">關閉</button>
+            </div>
+        </div>
+
+        <!-- 7. 編輯預算 Modal -->
+        <div id="modal" class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/40 hidden">
+            <div class="bg-white dark:bg-dark-card w-full max-w-sm rounded-t-3xl p-6 shadow-2xl animate-pop-in">
+                <h2 id="modal-title" class="text-xl font-bold mb-4 dark:text-white">設定類別</h2>
+                <div class="space-y-3"><input id="modal-name" class="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl"><input id="modal-amount" type="number" class="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl"><div id="color-picker" class="flex gap-2 overflow-x-auto pb-2"></div><div id="icon-picker" class="flex gap-3 overflow-x-auto pb-2"></div></div>
+                <div class="flex gap-3 mt-6"><button id="modal-delete-btn" class="hidden p-3 bg-red-50 text-red-400 rounded-xl"><i data-lucide="trash-2" class="w-5 h-5"></i></button><button id="modal-cancel-btn" class="flex-1 bg-slate-100 rounded-xl">取消</button><button id="modal-save-btn" class="flex-[2] bg-slate-800 text-white rounded-xl">儲存</button></div>
+            </div>
         </div>
     </div>
 
@@ -321,12 +333,12 @@
         // State
         let state = {
             user: null, isOffline: false, currentDate: new Date(), viewMode: 'list', isDarkMode: localStorage.getItem('darkMode')==='true',
-            accounts: [], // {id, name, type, balance, isDefault}
+            accounts: [], 
             categories: [{id:'1', name:'飲食', amount:6000, color:'#FDBA74', icon:'coffee'}],
-            fixedExpenses: [], // {id, name, amount, catId}
-            incomes: [], // {id, name, amount, accountId, date}
-            expenses: [], // {id, catId, amount, note, date, accountId}
-            transfers: [], // {id, fromId, toId, amount, note, date}
+            fixedExpenses: [], 
+            incomes: [], 
+            expenses: [], 
+            transfers: [], 
             appTitle: "2026 小富婆計畫", isPrivacyMode: false, editingId: null, saveStatus: 'saved'
         };
         let budgetChart = null;
@@ -357,7 +369,6 @@
         bind('btn-signup', 'click', async () => { try { await createUserWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-password').value); } catch(e) { document.getElementById('auth-error').textContent=e.message; document.getElementById('auth-error').classList.remove('hidden'); } });
         bind('logout-btn', 'click', () => signOut(auth));
         bind('btn-guest', 'click', () => { document.getElementById('auth-overlay').classList.add('hidden'); state.isOffline=true; });
-        
         bind('cloud-status', 'click', () => { if(state.isOffline) document.getElementById('auth-overlay').classList.remove('hidden'); });
 
         // Data Sync
@@ -400,22 +411,28 @@
             return inc - exp + transIn - transOut;
         }
         
-        // Helper: Calculate Category Stats for specific month
         function getCategoryStats(catId, targetDate) {
             const y = targetDate.getFullYear();
             const m = targetDate.getMonth();
-            
             const monthExpenses = state.expenses.filter(e => {
                 const d = new Date(e.date);
                 return d.getFullYear() === y && d.getMonth() === m && e.catId === catId;
             });
-            
             const spent = monthExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
             const category = state.categories.find(c => c.id === catId);
             const budget = Number(category?.amount || 0);
             const remaining = budget - spent;
             const percentage = budget > 0 ? (spent / budget) * 100 : 0;
             return { spent, budget, remaining, percentage };
+        }
+
+        function calculateMonthlyTotalIncome() {
+            const y = state.currentDate.getFullYear();
+            const m = state.currentDate.getMonth();
+            return state.incomes.filter(i => {
+                const d = new Date(i.date);
+                return d.getFullYear() === y && d.getMonth() === m;
+            }).reduce((sum, i) => sum + Number(i.amount), 0);
         }
 
         // Renderers
@@ -428,6 +445,8 @@
             const y = state.currentDate.getFullYear(), m = state.currentDate.getMonth()+1;
             document.getElementById('current-month-display').textContent = `${y}年 ${m}月`;
             document.getElementById('month-picker').value = `${y}-${String(m).padStart(2,'0')}`;
+            // 更新上方收入總額 (修正：只計算本月)
+            document.getElementById('income-display').textContent = formatMoney(calculateMonthlyTotalIncome());
         }
         
         bind('month-picker', 'change', (e) => {
@@ -447,7 +466,7 @@
             document.getElementById(`view-${state.viewMode}`).classList.remove('hidden');
             
             if(state.viewMode === 'assets') renderAssets();
-            if(state.viewMode === 'list') renderBudget();
+            if(state.viewMode === 'list') { renderBudget(); updateChart(); } // Ensure chart updates
             if(state.viewMode === 'ledger') renderLedger();
             if(state.viewMode === 'calendar') renderCalendar();
         }
@@ -457,7 +476,7 @@
         
         document.querySelectorAll('.view-tab').forEach(b => b.onclick = () => { state.viewMode=b.dataset.view; renderView(); });
 
-        // 1. Assets View
+        // 1. Assets
         function renderAssets() {
             const list = document.getElementById('accounts-list'); list.innerHTML = '';
             state.accounts.forEach(acc => {
@@ -465,37 +484,23 @@
                 const div = document.createElement('div');
                 let colorClass = acc.type==='savings' ? 'bg-indigo-50 border-indigo-100 text-indigo-700' : (acc.type==='invest' ? 'bg-yellow-50 border-yellow-100 text-yellow-700' : 'bg-white border-slate-100 text-slate-700');
                 if(state.isDarkMode) colorClass = 'dark:bg-dark-card dark:border-slate-700 dark:text-white';
-                
                 div.className = `p-4 rounded-2xl shadow-sm border flex justify-between items-center ${colorClass}`;
-                div.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <div class="p-2 rounded-full bg-white/50"><i data-lucide="${acc.type==='savings'?'piggy-bank':(acc.type==='invest'?'trending-up':'wallet')}" class="w-5 h-5"></i></div>
-                        <div><div class="font-bold">${acc.name}</div><div class="text-[10px] opacity-70">${acc.type==='general'?'日常':'儲蓄'}</div></div>
-                    </div>
-                    <div class="text-xl font-bold">${formatMoney(bal)}</div>
-                `;
+                div.innerHTML = `<div class="flex items-center space-x-3"><div class="p-2 rounded-full bg-white/50"><i data-lucide="${acc.type==='savings'?'piggy-bank':(acc.type==='invest'?'trending-up':'wallet')}" class="w-5 h-5"></i></div><div><div class="font-bold">${acc.name}</div><div class="text-[10px] opacity-70">${acc.type==='general'?'日常':'儲蓄'}</div></div></div><div class="text-xl font-bold">${formatMoney(bal)}</div>`;
                 list.appendChild(div);
             });
         }
         
-        // 2. Budget View
+        // 2. Budget
         function renderBudget() {
             const list = document.getElementById('category-list'); list.innerHTML = '';
             state.categories.forEach(cat => {
                 const { spent, budget, remaining, percentage } = getCategoryStats(cat.id, state.currentDate);
                 const div = document.createElement('div');
                 div.className = "bg-white dark:bg-dark-card p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700";
-                div.innerHTML = `
-                    <div class="flex justify-between mb-2">
-                        <div class="flex items-center space-x-2"><i data-lucide="${cat.icon}" class="w-4 h-4" style="color:${cat.color}"></i><span class="font-bold dark:text-white">${cat.name}</span></div>
-                        <div class="font-bold ${remaining<0?'text-red-500':'text-slate-700 dark:text-slate-200'}">剩餘 ${formatMoney(remaining)}</div>
-                    </div>
-                    <div class="w-full h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden"><div class="h-full rounded-full transition-all duration-500 ${remaining<0?'bg-red-400':''}" style="width:${percentage}%; background-color:${remaining<0?'':cat.color}"></div></div>
-                `;
+                div.innerHTML = `<div class="flex justify-between mb-2"><div class="flex items-center space-x-2"><i data-lucide="${cat.icon}" class="w-4 h-4" style="color:${cat.color}"></i><span class="font-bold dark:text-white">${cat.name}</span></div><div class="font-bold ${remaining<0?'text-red-500':'text-slate-700 dark:text-slate-200'}">剩餘 ${formatMoney(remaining)}</div></div><div class="w-full h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden"><div class="h-full rounded-full transition-all duration-500 ${remaining<0?'bg-red-400':''}" style="width:${percentage}%; background-color:${remaining<0?'':cat.color}"></div></div>`;
                 div.onclick = () => openCatDetail(cat);
                 list.appendChild(div);
             });
-            updateChart();
         }
 
         // 3. Ledger
@@ -511,6 +516,7 @@
             document.getElementById('ledger-expense-total').textContent = formatMoney(totalExp);
 
             const all = [...incs.map(i=>({...i, type:'inc'})), ...exps.map(e=>({...e, type:'exp'}))].sort((a,b) => new Date(b.date) - new Date(a.date));
+            if(all.length === 0) list.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">本月無收支紀錄</div>`;
 
             all.forEach(item => {
                 const div = document.createElement('div');
@@ -519,27 +525,21 @@
                 const cat = !isInc ? state.categories.find(c=>c.id===item.catId) : null;
                 const acc = state.accounts.find(a=>a.id===item.accountId);
                 div.className = "flex justify-between items-center p-3 bg-white dark:bg-dark-card rounded-xl border border-slate-100 dark:border-slate-700";
-                div.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <div class="p-2 rounded-full ${isInc ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-500'}" style="${!isInc && cat ? 'background-color:'+cat.color+'30; color:'+cat.color : ''}"><i data-lucide="${isInc ? 'arrow-down' : (cat ? cat.icon : 'shopping-bag')}" class="w-4 h-4"></i></div>
-                        <div><div class="font-bold dark:text-white text-sm">${item.name || item.note || (isInc?'收入':'支出')}</div><div class="text-[10px] text-slate-400">${d.getDate()}日 · ${acc?.name || '錢包'}</div></div>
-                    </div>
-                    <div class="font-bold ${isInc ? 'text-green-500' : 'text-slate-700 dark:text-slate-200'}">${isInc?'+':'-'}${formatMoney(item.amount)}</div>
-                `;
+                div.innerHTML = `<div class="flex items-center space-x-3"><div class="p-2 rounded-full ${isInc ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-500'}" style="${!isInc && cat ? 'background-color:'+cat.color+'30; color:'+cat.color : ''}"><i data-lucide="${isInc ? 'arrow-down' : (cat ? cat.icon : 'shopping-bag')}" class="w-4 h-4"></i></div><div><div class="font-bold dark:text-white text-sm">${item.name || item.note || (isInc?'收入':'支出')}</div><div class="text-[10px] text-slate-400">${d.getDate()}日 · ${acc?.name || '錢包'}</div></div></div><div class="font-bold ${isInc ? 'text-green-500' : 'text-slate-700 dark:text-slate-200'}">${isInc?'+':'-'}${formatMoney(item.amount)}</div>`;
                 div.onclick = () => { if(confirm('刪除此紀錄？')) { if(isInc) state.incomes = state.incomes.filter(x=>x.id!==item.id); else state.expenses = state.expenses.filter(x=>x.id!==item.id); renderAll(); scheduleSave(); }};
                 list.appendChild(div);
             });
         }
 
-        // Hippo Mood
+        // Hippo Mood (修正：預算剩餘 = 本月收入 - 本月支出)
         function renderHippo() {
             const y = state.currentDate.getFullYear(), m = state.currentDate.getMonth();
-            const inc = state.incomes.filter(i => { const d=new Date(i.date); return d.getMonth()===m && d.getFullYear()===y; }).reduce((s,i)=>s+Number(i.amount),0);
-            const exp = state.expenses.filter(e => { const d=new Date(e.date); return d.getMonth()===m && d.getFullYear()===y; }).reduce((s,e)=>s+Number(e.amount),0);
-            const remain = inc - exp;
+            const income = calculateMonthlyTotalIncome();
+            const expenses = state.expenses.filter(e => { const d=new Date(e.date); return d.getMonth()===m && d.getFullYear()===y; }).reduce((s,e)=>s+Number(e.amount),0);
+            const remain = income - expenses;
             
             document.getElementById('total-remaining-display').textContent = formatMoney(remain);
-            const pct = inc > 0 ? (exp/inc)*100 : 0;
+            const pct = income > 0 ? (expenses/income)*100 : 0;
             document.getElementById('total-spent-percent').textContent = Math.round(pct) + '%';
             document.getElementById('main-progress-bar').style.width = Math.min(100, pct) + '%';
             
@@ -614,30 +614,17 @@
         let expCatId = '';
         function renderExpCats() {
             const grid = document.getElementById('expense-category-picker'); grid.innerHTML = '';
-            
-            // Get date from input or default to today
             const inputDate = document.getElementById('expense-date').valueAsDate || new Date();
-            
             if(state.categories.length > 0 && !expCatId) expCatId = state.categories[0].id;
-
             state.categories.forEach(c => {
                 const { remaining } = getCategoryStats(c.id, inputDate);
                 const btn = document.createElement('div');
                 btn.className = "flex flex-col items-center p-2 border rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors";
-                // Show Remaining in button
-                btn.innerHTML = `
-                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-white mb-1" style="background-color:${c.color}"><i data-lucide="${c.icon}" class="w-4 h-4"></i></div>
-                    <span class="text-[10px] font-bold dark:text-white truncate w-full text-center">${c.name}</span>
-                    <span class="text-[9px] ${remaining<0?'text-red-400':'text-green-500'} font-bold">$${remaining}</span>
-                `;
-                btn.onclick = () => { 
-                    document.querySelectorAll('#expense-category-picker > div').forEach(d=>d.classList.remove('ring-2','ring-pink-300'));
-                    btn.classList.add('ring-2','ring-pink-300'); expCatId = c.id; 
-                };
+                btn.innerHTML = `<div class="w-8 h-8 rounded-full flex items-center justify-center text-white mb-1" style="background-color:${c.color}"><i data-lucide="${c.icon}" class="w-4 h-4"></i></div><span class="text-[10px] font-bold dark:text-white truncate w-full text-center">${c.name}</span><span class="text-[9px] ${remaining<0?'text-red-400':'text-green-500'} font-bold">$${remaining}</span>`;
+                btn.onclick = () => { document.querySelectorAll('#expense-category-picker > div').forEach(d=>d.classList.remove('ring-2','ring-pink-300')); btn.classList.add('ring-2','ring-pink-300'); expCatId = c.id; };
                 grid.appendChild(btn);
             });
         }
-        // Update cats when date changes to reflect correct remaining
         bind('expense-date', 'change', () => renderExpCats());
 
         bind('expense-save-btn', 'click', () => {
@@ -645,8 +632,8 @@
             if(acc && amt && expCatId) { state.expenses.push({id:uuid(), catId:expCatId, amount:amt, note, accountId:acc, date:date.toISOString()}); document.getElementById('expense-modal').classList.add('hidden'); renderAll(); scheduleSave(); }
         });
 
-        // Fixed Exp
-        bind('add-fix-btn', 'click', () => { const name = document.getElementById('fix-name').value, amt = document.getElementById('fix-amount').value; if(name && amt) { state.fixedExpenses.push({id:uuid(), name, amount:amt}); document.getElementById('fix-name').value=''; document.getElementById('fix-amount').value=''; renderFixedList(); scheduleSave(); } });
+        // Fixed Exp (修正：連續新增)
+        bind('add-fix-btn', 'click', () => { const name = document.getElementById('fix-name').value, amt = document.getElementById('fix-amount').value; if(name && amt) { state.fixedExpenses.push({id:uuid(), name, amount:amt}); document.getElementById('fix-name').value=''; document.getElementById('fix-amount').value=''; document.getElementById('fix-name').focus(); renderFixedList(); scheduleSave(); } });
         function renderFixedList() { const list = document.getElementById('fixed-list'); list.innerHTML = ''; state.fixedExpenses.forEach(f => { const div = document.createElement('div'); div.className = "flex justify-between items-center p-2 bg-slate-50 dark:bg-slate-800 rounded-xl"; div.innerHTML = `<span class="dark:text-white font-bold">${f.name}</span><div class="flex items-center space-x-2"><span class="text-slate-500">$${f.amount}</span><i data-lucide="trash-2" class="w-4 h-4 text-red-400 cursor-pointer del-fix"></i></div>`; div.querySelector('.del-fix').onclick = () => { state.fixedExpenses = state.fixedExpenses.filter(x=>x.id!==f.id); renderFixedList(); scheduleSave(); }; list.appendChild(div); }); lucide.createIcons(); }
         bind('apply-fixed-btn', 'click', () => { if(confirm('確定匯入本月固定支出？')) { const date = new Date().toISOString(), defaultAcc = state.accounts.find(a=>a.isDefault)?.id || state.accounts[0].id, defaultCat = state.categories[0].id; state.fixedExpenses.forEach(f => { state.expenses.push({id:uuid(), catId:defaultCat, amount:f.amount, note:f.name + '(固定)', accountId:defaultAcc, date}); }); document.getElementById('fixed-modal').classList.add('hidden'); renderAll(); scheduleSave(); } });
 
@@ -657,12 +644,34 @@
         // Transfer
         bind('trans-save-btn', 'click', () => { const from = document.getElementById('trans-from').value, to = document.getElementById('trans-to').value, amt = document.getElementById('trans-amount').value, note = document.getElementById('trans-note').value; if(from && to && amt && from !== to) { state.transfers.push({id:uuid(), fromId:from, toId:to, amount:amt, note, date:new Date().toISOString()}); document.getElementById('transfer-modal').classList.add('hidden'); renderAll(); scheduleSave(); } else { alert('檢查轉帳資訊'); } });
 
-        // Category Modal
+        // Category Modal (修正：刪除按鈕綁定)
         let catForm = {name:'', amount:'', color:COLORS[0], icon:ICONS[0]};
         function renderCatForm() { const cp = document.getElementById('color-picker'); cp.innerHTML=''; COLORS.forEach(c => { const b=document.createElement('div'); b.className=`w-6 h-6 rounded-full cursor-pointer border-2 ${catForm.color===c?'border-slate-500':'border-transparent'}`; b.style.backgroundColor=c; b.onclick=()=>{catForm.color=c; renderCatForm();}; cp.appendChild(b); }); const ip = document.getElementById('icon-picker'); ip.innerHTML=''; ICONS.forEach(i => { const b=document.createElement('div'); b.className=`p-2 rounded-lg cursor-pointer ${catForm.icon===i?'bg-pink-100 text-pink-600':'text-slate-400'}`; b.innerHTML=`<i data-lucide="${i}" class="w-5 h-5"></i>`; b.onclick=()=>{catForm.icon=i; renderCatForm();}; ip.appendChild(b); }); lucide.createIcons(); }
-        bind('modal-save-btn', 'click', () => { const name = document.getElementById('modal-name').value, amt = document.getElementById('modal-amount').value; if(name && amt) { state.categories.push({id:uuid(), name, amount:amt, color:catForm.color, icon:catForm.icon}); document.getElementById('modal').classList.add('hidden'); renderAll(); scheduleSave(); } });
+        
+        // 直接在 openModal 綁定刪除事件以確保狀態正確
+        function openModal(category = null) {
+            document.getElementById('modal').classList.remove('hidden');
+            if (category) { 
+                state.editingId = category.id; modalForm = { ...category }; 
+                document.getElementById('modal-delete-btn').classList.remove('hidden'); 
+                document.getElementById('modal-delete-btn').onclick = () => {
+                    if (confirm('確定刪除此類別？相關支出紀錄也會一併刪除。')) {
+                        state.categories = state.categories.filter(c => c.id !== state.editingId);
+                        state.expenses = state.expenses.filter(e => e.catId !== state.editingId);
+                        document.getElementById('modal').classList.add('hidden'); renderAll(); scheduleSave();
+                    }
+                };
+            } else { 
+                state.editingId = null; modalForm = { name: '', amount: '', color: COLORS[0], icon: 'wallet' }; 
+                document.getElementById('modal-delete-btn').classList.add('hidden'); 
+            }
+            renderModalForm();
+        }
+        
+        bind('modal-save-btn', 'click', () => { const name = document.getElementById('modal-name').value, amt = document.getElementById('modal-amount').value; if(name && amt) { if(state.editingId) { state.categories = state.categories.map(c => c.id === state.editingId ? { ...modalForm, id: c.id, amount: Number(amt) } : c); } else { state.categories.push({id:uuid(), name, amount:Number(amt), color:catForm.color, icon:catForm.icon}); } document.getElementById('modal').classList.add('hidden'); renderAll(); scheduleSave(); } });
         bind('modal-cancel-btn', 'click', () => document.getElementById('modal').classList.add('hidden'));
-        bind('modal-delete-btn', 'click', () => { if(state.editingId && confirm('刪除類別會一併刪除紀錄，確定？')) { state.categories = state.categories.filter(c => c.id !== state.editingId); state.expenses = state.expenses.filter(e => e.catId !== state.editingId); document.getElementById('modal').classList.add('hidden'); renderAll(); scheduleSave(); } });
+        bindInput('modal-name', (e) => modalForm.name = e.target.value);
+        bindInput('modal-amount', (e) => modalForm.amount = e.target.value);
 
         // Title
         const titleContainer = document.getElementById('title-container'); const inputEl = document.getElementById('app-title-input'); const saveBtn = document.getElementById('save-title-btn'); const displayEl = document.getElementById('app-title-display');
@@ -670,9 +679,28 @@
         saveBtn.onclick = (e) => { e.stopPropagation(); finishTitleEdit(); }; inputEl.onblur = finishTitleEdit; inputEl.onkeypress = (e) => { if(e.key === 'Enter') finishTitleEdit(); };
         function finishTitleEdit() { state.appTitle = inputEl.value; displayEl.textContent = state.appTitle; displayEl.classList.remove('hidden'); inputEl.classList.add('hidden'); saveBtn.classList.add('hidden'); scheduleSave(); }
 
-        // Chart
-        function updateChart() { if(!budgetChart) return; const m = state.currentDate.getMonth(), y = state.currentDate.getFullYear(); const data = state.categories.map(c => state.expenses.filter(e=>e.catId===c.id && new Date(e.date).getMonth()===m).reduce((s,x)=>s+Number(x.amount),0)); budgetChart.data.labels = state.categories.map(c=>c.name); budgetChart.data.datasets[0].data = data; budgetChart.data.datasets[0].backgroundColor = state.categories.map(c=>c.color); budgetChart.update(); }
-        function initChart() { const ctx = document.getElementById('budgetChart').getContext('2d'); budgetChart = new Chart(ctx, { type:'doughnut', data:{datasets:[{data:[], borderWidth:0}]}, options:{cutout:'70%', plugins:{legend:{display:false}}} }); }
+        // Chart (修正：確保切換時繪製)
+        function updateChart() { 
+            const canvas = document.getElementById('budgetChart');
+            if(!canvas) return;
+            // 如果 canvas 存在但 chart 實例不存在，重新初始化
+            if(!budgetChart) initChart();
+            
+            const m = state.currentDate.getMonth(), y = state.currentDate.getFullYear(); 
+            const data = state.categories.map(c => state.expenses.filter(e=>e.catId===c.id && new Date(e.date).getMonth()===m).reduce((s,x)=>s+Number(x.amount),0)); 
+            
+            if(budgetChart) {
+                budgetChart.data.labels = state.categories.map(c=>c.name); 
+                budgetChart.data.datasets[0].data = data; 
+                budgetChart.data.datasets[0].backgroundColor = state.categories.map(c=>c.color); 
+                budgetChart.update(); 
+            }
+        }
+        function initChart() { 
+            const ctx = document.getElementById('budgetChart').getContext('2d'); 
+            if(budgetChart) budgetChart.destroy();
+            budgetChart = new Chart(ctx, { type:'doughnut', data:{datasets:[{data:[], borderWidth:0}]}, options:{cutout:'70%', plugins:{legend:{display:false}}, maintainAspectRatio: false} }); 
+        }
 
         // Common
         function updateSaveStatus(s) { const el = document.getElementById('cloud-status'); if(!el) return; let iconName='',iconClass='',textContent='',textClass=''; if(s==='saving'){ el.classList.add('bg-blue-50','dark:bg-blue-900/30'); iconName='refresh-cw'; iconClass='text-blue-400 animate-spin w-3 h-3'; textContent="儲存中"; textClass="text-blue-400"; } else if(s==='saved'){ el.classList.add('bg-green-50','dark:bg-green-900/30'); iconName='cloud'; iconClass='text-green-500 w-3 h-3'; textContent="已備份"; textClass="text-green-500"; } else if(s==='saved-local'||s==='offline-mode'){ el.classList.add('bg-orange-50','border-orange-100','dark:bg-orange-900/30','dark:border-orange-800'); iconName='wifi-off'; iconClass='text-orange-500 w-3 h-3'; textContent="本機"; textClass="text-orange-500"; } else { el.classList.add('bg-red-50'); iconName='alert-circle'; iconClass='text-red-500 w-3 h-3'; textContent="錯誤"; textClass="text-red-500"; } el.innerHTML=`<i data-lucide="${iconName}" class="${iconClass}"></i><span class="${textClass} ml-1">${textContent}</span>`; lucide.createIcons(); }
