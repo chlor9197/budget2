@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>可愛預算小管家</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #FFF0F5; }
+        .selection-pink::selection { background-color: #FBCFE8; }
+        
+        /* 動畫 */
+        @keyframes slide-up {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide-up { animation: slide-up 0.3s ease-out; }
+        
+        /* 隱藏數字輸入框的箭頭 */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        /* 滾動條美化 */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="text-slate-700 selection-pink pb-24">
+
+    <!-- 頂部導航 -->
+    <div class="sticky top-0 z-30 bg-white/80 backdrop-blur-md shadow-sm px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-2 flex-1 group cursor-pointer" id="title-container">
+            <h1 id="app-title-display" class="text-xl font-bold text-pink-800 truncate">載入中...</h1>
+            <i data-lucide="edit-2" class="w-3.5 h-3.5 text-pink-300 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+            <input id="app-title-input" class="hidden flex-1 bg-pink-50 border border-pink-200 rounded px-2 py-1 text-lg font-bold text-pink-800 outline-none focus:ring-2 focus:ring-pink-300" />
+            <button id="save-title-btn" class="hidden p-1 bg-green-100 text-green-600 rounded-full"><i data-lucide="save" class="w-4 h-4"></i></button>
+        </div>
+
+        <div class="flex items-center space-x-2 ml-2">
+            <!-- 雲端狀態 -->
+            <div id="cloud-status" class="flex items-center space-x-1 px-2 py-1 bg-slate-50 rounded-full text-xs transition-colors cursor-pointer border border-transparent" title="狀態">
+                <!-- JS 會動態注入內容 -->
+                <i data-lucide="cloud" class="w-3.5 h-3.5 text-slate-400"></i>
+                <span class="text-slate-400">連線中</span>
+            </div>
+            <!-- 隱私模式 -->
+            <button id="privacy-btn" class="p-2 bg-pink-100 hover:bg-pink-200 rounded-full text-pink-600 transition-colors">
+                <i data-lucide="eye" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="max-w-md mx-auto p-4 space-y-6">
+
+        <!-- 總收入卡片 -->
+        <div class="bg-white p-5 rounded-3xl shadow-sm border border-pink-100 relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                <i data-lucide="dollar-sign" class="w-24 h-24 text-pink-400 rotate-12"></i>
+            </div>
+            
+            <label class="text-sm font-bold text-slate-500 mb-1 block">本月預計總收入</label>
+            <div class="flex items-center">
+                <span class="text-2xl font-bold text-slate-400 mr-2">$</span>
+                <input type="number" id="income-input" class="w-full text-4xl font-extrabold text-slate-700 bg-transparent outline-none placeholder-slate-200 z-10" value="30000">
+            </div>
+
+            <!-- 狀態提示條 -->
+            <div id="status-bar" class="mt-4 p-3 rounded-xl flex items-center text-sm font-bold transition-colors bg-blue-50 text-blue-600">
+                <div id="status-icon" class="mr-2 text-lg">✏️</div>
+                <div id="status-text" class="flex-1">計算中...</div>
+            </div>
+        </div>
+
+        <!-- 圖表區 -->
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-pink-100 flex flex-col items-center justify-center relative">
+            <div class="w-48 h-48 relative">
+                <canvas id="budgetChart"></canvas>
+                <!-- 中間文字 -->
+                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span class="text-xs text-slate-400">已分配</span>
+                    <span id="allocated-percent" class="text-xl font-bold text-slate-700">0%</span>
+                </div>
+            </div>
+            <!-- 鼓勵小語 -->
+            <div id="quote-text" class="mt-4 text-center text-slate-500 text-sm italic bg-slate-50 px-4 py-2 rounded-full">
+                規劃好每一分錢，讓夢想更靠近！✨
+            </div>
+        </div>
+
+        <!-- 預算列表標題 -->
+        <div class="flex items-center justify-between px-2">
+            <h2 class="text-lg font-bold text-slate-700 flex items-center">
+                <i data-lucide="wallet" class="mr-2 text-pink-400 w-5 h-5"></i> 預算分配
+            </h2>
+            <button id="add-btn" class="flex items-center space-x-1 bg-slate-800 text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-slate-700 active:scale-95 transition-all">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i> <span>新增項目</span>
+            </button>
+        </div>
+
+        <!-- 預算列表 -->
+        <div id="category-list" class="space-y-3 pb-10">
+            <!-- JS 動態生成 -->
+        </div>
+
+    </div>
+
+    <!-- 編輯/新增 Modal -->
+    <div id="modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/20 backdrop-blur-sm hidden">
+        <div class="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-slide-up" onclick="event.stopPropagation()">
+            <h2 id="modal-title" class="text-xl font-bold text-slate-800 mb-6">新增預算項目</h2>
+
+            <div class="space-y-4">
+                <!-- 名稱 -->
+                <div>
+                    <label class="text-xs font-bold text-slate-400 uppercase">項目名稱</label>
+                    <input type="text" id="modal-name" placeholder="例如: 買switch基金" class="w-full mt-1 p-3 bg-slate-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-pink-200 font-bold text-slate-700">
+                </div>
+                <!-- 金額 -->
+                <div>
+                    <label class="text-xs font-bold text-slate-400 uppercase">預算金額</label>
+                    <div class="relative mt-1">
+                        <span class="absolute left-3 top-3 text-slate-400 font-bold">$</span>
+                        <input type="number" id="modal-amount" placeholder="0" class="w-full p-3 pl-7 bg-slate-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-pink-200 font-bold text-slate-700">
+                    </div>
+                </div>
+                <!-- 顏色 -->
+                <div>
+                    <label class="text-xs font-bold text-slate-400 uppercase">標籤顏色</label>
+                    <div id="color-picker" class="flex gap-2 mt-2 overflow-x-auto pb-2 hide-scrollbar">
+                        <!-- JS 生成 -->
+                    </div>
+                </div>
+                <!-- 圖示 -->
+                <div>
+                    <label class="text-xs font-bold text-slate-400 uppercase">圖示</label>
+                    <div id="icon-picker" class="flex gap-3 mt-2 overflow-x-auto pb-2 hide-scrollbar">
+                        <!-- JS 生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 按鈕區 -->
+            <div class="flex gap-3 mt-8">
+                <button id="modal-delete-btn" class="hidden p-4 bg-red-50 text-red-400 rounded-xl hover:bg-red-100 transition-colors">
+                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                </button>
+                <button id="modal-cancel-btn" class="flex-1 py-3 text-slate-500 font-bold bg-slate-100 rounded-xl hover:bg-slate-200">取消</button>
+                <button id="modal-save-btn" class="flex-[2] py-3 text-white font-bold bg-slate-800 hover:bg-slate-900 rounded-xl shadow-lg active:scale-95 transition-all">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部裝飾線 -->
+    <div class="fixed bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300"></div>
+
+    <!-- 邏輯腳本 (Module 模式以支援 import) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- 設定與常數 ---
+        
+        // 1. Firebase 設定
+        const firebaseConfig = {
+            apiKey: "AIzaSyD6HngA3NX5sMW6jSvDE0b90ozr_cw0yCk",
+            authDomain: "budget-70835.firebaseapp.com",
+            projectId: "budget-70835",
+            storageBucket: "budget-70835.firebasestorage.app",
+            messagingSenderId: "780821810140",
+            appId: "1:780821810140:web:e8cc10ae8bb8bd7b10dd19",
+            measurementId: "G-PVVY6Z5JV4"
+        };
+
+        const APP_ID = 'budget-app-deploy'; // 用來區分資料的 ID
+        const COLORS = ['#FCA5A5', '#FDBA74', '#FDE047', '#86EFAC', '#93C5FD', '#C4B5FD', '#F9A8D4', '#CBD5E1'];
+        const ICONS = ['wallet', 'home', 'coffee', 'smartphone', 'shopping-bag', 'heart', 'plane', 'gift', 'music', 'sparkles'];
+        const QUOTES = {
+            normal: "規劃好每一分錢，讓夢想更靠近！✨",
+            perfect: "太棒了！預算分配得剛剛好！🐰",
+            surplus: "哇！還有剩餘的錢，要存起來嗎？💰",
+            deficit: "歐歐... 超出預算了，河馬覺得不行 🦛💦"
+        };
+
+        // --- 初始化 Firebase ---
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- 全域狀態 ---
+        let state = {
+            user: null,
+            isOffline: false, // 離線模式開關
+            income: 30000,
+            categories: [
+                { id: '1', name: '房租水電', amount: 8000, color: '#FCA5A5', icon: 'home' },
+                { id: '2', name: '伙食費', amount: 6000, color: '#FDBA74', icon: 'coffee' },
+                { id: '3', name: '夢想基金', amount: 5000, color: '#C4B5FD', icon: 'heart' }
+            ],
+            appTitle: "2026 小富婆計畫",
+            isPrivacyMode: false,
+            editingId: null,
+            saveStatus: 'saved' // saved, saving, error, saved-local
+        };
+
+        // Chart 實例
+        let budgetChart = null;
+
+        // --- 核心邏輯 ---
+
+        async function init() {
+            // 先嘗試載入本地資料，以防連線太慢
+            loadFromLocal();
+            renderAll();
+
+            // 監聽 Firebase 登入狀態
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    state.user = user;
+                    state.isOffline = false;
+                    console.log("Firebase 連線成功");
+                    setupDataListener(user.uid);
+                } else {
+                    // 如果沒有使用者，嘗試匿名登入
+                    signInAnonymously(auth).catch((error) => {
+                        // 登入失敗 (通常是權限沒開)，切換至離線模式
+                        console.warn("切換至離線模式 (Firebase 登入未啟用)", error);
+                        state.isOffline = true;
+                        updateSaveStatus('offline-mode');
+                    });
+                }
+            });
+            
+            initChart();
+        }
+
+        // 2. 監聽 Firestore 資料
+        function setupDataListener(uid) {
+            const docRef = doc(db, 'artifacts', APP_ID, 'users', uid, 'data', 'budget');
+            onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    let needsRender = false;
+                    
+                    if (data.income !== undefined && data.income !== state.income) { state.income = data.income; needsRender = true; }
+                    if (data.categories) { state.categories = data.categories; needsRender = true; }
+                    if (data.appTitle && data.appTitle !== state.appTitle) { state.appTitle = data.appTitle; needsRender = true; }
+                    
+                    if (needsRender) renderAll();
+                }
+            }, (error) => {
+                console.warn("讀取雲端資料失敗，使用本地資料:", error);
+                state.isOffline = true;
+                updateSaveStatus('offline-mode');
+            });
+        }
+        
+        // 2.5 載入本地資料 (離線模式用)
+        function loadFromLocal() {
+            try {
+                const localData = localStorage.getItem('budget_local_data');
+                if (localData) {
+                    const data = JSON.parse(localData);
+                    state.income = data.income ?? 30000;
+                    state.categories = data.categories ?? state.categories;
+                    state.appTitle = data.appTitle ?? state.appTitle;
+                }
+            } catch(e) {
+                console.warn("本地資料讀取錯誤", e);
+            }
+        }
+
+        // 3. 自動存檔 (Debounce) - 支援離線與雲端
+        let saveTimeout;
+        function scheduleSave() {
+            updateSaveStatus('saving');
+            
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(async () => {
+                
+                // 1. 優先存本地 (雙重保險)
+                try {
+                    localStorage.setItem('budget_local_data', JSON.stringify({
+                        income: Number(state.income),
+                        categories: state.categories,
+                        appTitle: state.appTitle
+                    }));
+                } catch(e) { console.warn("本地存檔失敗", e); }
+
+                // 2. 如果是離線模式，就停在這裡
+                if (state.isOffline) {
+                    updateSaveStatus('saved-local');
+                    return;
+                }
+
+                // 3. 嘗試存雲端
+                if (state.user) {
+                    try {
+                        const docRef = doc(db, 'artifacts', APP_ID, 'users', state.user.uid, 'data', 'budget');
+                        await setDoc(docRef, {
+                            income: Number(state.income),
+                            categories: state.categories,
+                            appTitle: state.appTitle
+                        }, { merge: true });
+                        updateSaveStatus('saved');
+                    } catch (e) {
+                        // 雲端存檔失敗 (例如規則沒開)，切換回離線狀態顯示
+                        console.warn("雲端存檔失敗，轉為離線顯示", e);
+                        state.isOffline = true;
+                        updateSaveStatus('saved-local');
+                    }
+                }
+            }, 800);
+        }
+
+        // --- UI 渲染 ---
+
+        function renderAll() {
+            renderHeader();
+            renderStats();
+            renderList();
+            updateChart();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        function renderHeader() {
+            const displayEl = document.getElementById('app-title-display');
+            const inputEl = document.getElementById('app-title-input');
+            if(displayEl) displayEl.textContent = state.appTitle;
+            if(inputEl) inputEl.value = state.appTitle;
+
+            const incomeInput = document.getElementById('income-input');
+            if (incomeInput) {
+                if (state.isPrivacyMode) {
+                    incomeInput.type = "password";
+                } else {
+                    incomeInput.type = "number";
+                    incomeInput.value = state.income;
+                }
+            }
+            
+            const privacyBtn = document.getElementById('privacy-btn');
+            if(privacyBtn) privacyBtn.innerHTML = `<i data-lucide="${state.isPrivacyMode ? 'eye-off' : 'eye'}" class="w-5 h-5"></i>`;
+        }
+
+        function updateSaveStatus(status) {
+            state.saveStatus = status;
+            const el = document.getElementById('cloud-status');
+            if (!el) return;
+            
+            el.onclick = null;
+            el.className = "flex items-center space-x-1 px-2 py-1 rounded-full text-xs transition-colors cursor-default border border-transparent";
+
+            let iconName = '';
+            let iconClass = '';
+            let textContent = '';
+            let textClass = '';
+
+            if (status === 'saving') {
+                el.classList.add('bg-blue-50');
+                iconName = 'refresh-cw'; 
+                iconClass = 'text-blue-400 animate-spin w-3 h-3';
+                textContent = "儲存中";
+                textClass = "text-blue-400";
+            } else if (status === 'saved') {
+                el.classList.add('bg-green-50');
+                iconName = 'cloud';
+                iconClass = 'text-green-500 w-3.5 h-3.5';
+                textContent = "已雲端備份";
+                textClass = "text-green-500";
+            } else if (status === 'saved-local' || status === 'offline-mode') {
+                el.classList.add('bg-orange-50', 'border-orange-100');
+                iconName = 'wifi-off';
+                iconClass = 'text-orange-500 w-3.5 h-3.5';
+                textContent = "已儲存 (本機)";
+                textClass = "text-orange-500 font-bold";
+            } else {
+                el.classList.add('bg-red-50');
+                iconName = 'alert-circle';
+                iconClass = 'text-red-500 w-3.5 h-3.5';
+                textContent = "錯誤";
+                textClass = "text-red-500";
+            }
+
+            el.innerHTML = `<i data-lucide="${iconName}" class="${iconClass}"></i><span class="${textClass} ml-1">${textContent}</span>`;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        function renderStats() {
+            const totalAllocated = state.categories.reduce((sum, c) => sum + Number(c.amount), 0);
+            const remaining = state.income - totalAllocated;
+            const percent = state.income > 0 ? Math.round((totalAllocated / state.income) * 100) : 0;
+
+            const percentEl = document.getElementById('allocated-percent');
+            if(percentEl) percentEl.textContent = `${percent}%`;
+
+            const statusEl = document.getElementById('status-bar');
+            const iconEl = document.getElementById('status-icon');
+            const textEl = document.getElementById('status-text');
+            const quoteEl = document.getElementById('quote-text');
+
+            if (!statusEl || !iconEl || !textEl || !quoteEl) return;
+
+            if (remaining === 0) {
+                statusEl.className = "mt-4 p-3 rounded-xl flex items-center text-sm font-bold transition-colors bg-blue-50 text-blue-600";
+                iconEl.textContent = "⭐";
+                textEl.textContent = "完美！預算分配剛剛好";
+                quoteEl.textContent = QUOTES.perfect;
+            } else if (remaining > 0) {
+                statusEl.className = "mt-4 p-3 rounded-xl flex items-center text-sm font-bold transition-colors bg-green-50 text-green-600";
+                iconEl.textContent = "🌱";
+                textEl.textContent = `還有 ${formatMoney(remaining)} 可以分配`;
+                quoteEl.textContent = QUOTES.surplus;
+            } else {
+                statusEl.className = "mt-4 p-3 rounded-xl flex items-center text-sm font-bold transition-colors bg-red-50 text-red-500";
+                iconEl.textContent = "🌧️";
+                textEl.textContent = `超支了 ${formatMoney(Math.abs(remaining))}！`;
+                quoteEl.textContent = QUOTES.deficit;
+            }
+        }
+
+        function renderList() {
+            const container = document.getElementById('category-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (state.categories.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl">
+                        <p>還沒有預算項目哦！</p>
+                        <p class="text-xs mt-1">點擊右上角「新增項目」開始規劃</p>
+                    </div>`;
+                return;
+            }
+
+            state.categories.forEach(cat => {
+                const percent = state.income > 0 ? Math.round((cat.amount / state.income) * 100) : 0;
+                const div = document.createElement('div');
+                div.className = "bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between active:scale-[0.99] transition-transform cursor-pointer group";
+                div.onclick = () => openModal(cat);
+                div.innerHTML = `
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-sm" style="background-color: ${cat.color}">
+                            <i data-lucide="${cat.icon}" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-700">${cat.name}</h3>
+                            <div class="flex items-center space-x-2 text-xs text-slate-400 mt-0.5">
+                                <span class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-500">${percent}%</span>
+                                <div class="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full rounded-full" style="width: ${percent}%; background-color: ${cat.color}"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-bold text-lg text-slate-700">${formatMoney(cat.amount)}</div>
+                        <div class="text-xs text-pink-300 opacity-0 group-hover:opacity-100 transition-opacity flex justify-end items-center">
+                            編輯 <i data-lucide="edit-2" class="w-3 h-3 ml-1"></i>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // --- Chart.js ---
+        function initChart() {
+            const canvas = document.getElementById('budgetChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            
+            // 銷毀舊的圖表以防重複
+            if (budgetChart) budgetChart.destroy();
+
+            budgetChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    cutout: '75%', // 甜甜圈的厚度
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.label}: $${context.raw.toLocaleString()}`;
+                                }
+                            },
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            titleColor: '#334155',
+                            bodyColor: '#334155',
+                            bodyFont: { weight: 'bold' },
+                            padding: 12,
+                            borderColor: '#F1F5F9',
+                            borderWidth: 1,
+                            displayColors: true,
+                            boxWidth: 8,
+                            boxHeight: 8,
+                            usePointStyle: true,
+                            cornerRadius: 12,
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChart() {
+            if (!budgetChart) return;
+            
+            const totalAllocated = state.categories.reduce((sum, c) => sum + Number(c.amount), 0);
+            const remaining = Math.max(0, state.income - totalAllocated);
+
+            const labels = state.categories.map(c => c.name);
+            const data = state.categories.map(c => Number(c.amount));
+            const colors = state.categories.map(c => c.color);
+
+            // Add remaining part
+            if (remaining > 0) {
+                labels.push('未分配');
+                data.push(remaining);
+                colors.push('#E2E8F0');
+            }
+
+            budgetChart.data.labels = labels;
+            budgetChart.data.datasets[0].data = data;
+            budgetChart.data.datasets[0].backgroundColor = colors;
+            budgetChart.update();
+        }
+
+        // --- Modal & Form ---
+        let modalForm = { name: '', amount: '', color: COLORS[0], icon: 'wallet' };
+
+        function openModal(category = null) {
+            const modal = document.getElementById('modal');
+            const title = document.getElementById('modal-title');
+            const deleteBtn = document.getElementById('modal-delete-btn');
+            
+            modal.classList.remove('hidden');
+            
+            if (category) {
+                state.editingId = category.id;
+                modalForm = { ...category };
+                title.textContent = '編輯項目';
+                deleteBtn.classList.remove('hidden');
+            } else {
+                state.editingId = null;
+                modalForm = { name: '', amount: '', color: COLORS[Math.floor(Math.random()*COLORS.length)], icon: 'wallet' };
+                title.textContent = '新增預算項目';
+                deleteBtn.classList.add('hidden');
+            }
+            renderModalForm();
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+        }
+
+        function renderModalForm() {
+            const nameInput = document.getElementById('modal-name');
+            const amountInput = document.getElementById('modal-amount');
+            if (nameInput) nameInput.value = modalForm.name;
+            if (amountInput) amountInput.value = modalForm.amount;
+            
+            // Color Picker
+            const colorContainer = document.getElementById('color-picker');
+            if (colorContainer) {
+                colorContainer.innerHTML = '';
+                COLORS.forEach(color => {
+                    const btn = document.createElement('button');
+                    btn.className = `w-8 h-8 rounded-full flex-shrink-0 transition-transform ${modalForm.color === color ? 'scale-110 ring-2 ring-offset-2 ring-slate-300' : ''}`;
+                    btn.style.backgroundColor = color;
+                    btn.onclick = () => { modalForm.color = color; renderModalForm(); };
+                    colorContainer.appendChild(btn);
+                });
+            }
+
+            // Icon Picker
+            const iconContainer = document.getElementById('icon-picker');
+            if (iconContainer) {
+                iconContainer.innerHTML = '';
+                ICONS.forEach(icon => {
+                    const isSelected = modalForm.icon === icon;
+                    const btn = document.createElement('button');
+                    btn.className = `p-2 rounded-xl transition-all ${isSelected ? 'bg-pink-100 text-pink-500' : 'bg-slate-50 text-slate-400'}`;
+                    btn.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5"></i>`;
+                    btn.onclick = () => { modalForm.icon = icon; renderModalForm(); };
+                    iconContainer.appendChild(btn);
+                });
+            }
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        // --- Event Listeners ---
+        
+        // Income
+        const incomeInput = document.getElementById('income-input');
+        if (incomeInput) {
+            incomeInput.addEventListener('input', (e) => {
+                state.income = Number(e.target.value);
+                renderStats();
+                updateChart();
+                renderList(); 
+                scheduleSave();
+            });
+        }
+
+        // Title Editing
+        const titleContainer = document.getElementById('title-container');
+        const displayEl = document.getElementById('app-title-display');
+        const inputEl = document.getElementById('app-title-input');
+        const saveBtn = document.getElementById('save-title-btn');
+
+        if (titleContainer) {
+            titleContainer.addEventListener('click', () => {
+                if (inputEl.classList.contains('hidden')) {
+                    displayEl.classList.add('hidden');
+                    inputEl.classList.remove('hidden');
+                    saveBtn.classList.remove('hidden');
+                    inputEl.focus();
+                }
+            });
+        }
+
+        if (saveBtn) {
+            saveBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                finishTitleEdit();
+            });
+        }
+
+        if (inputEl) {
+            inputEl.addEventListener('blur', finishTitleEdit);
+            inputEl.addEventListener('keypress', (e) => { if(e.key === 'Enter') finishTitleEdit(); });
+        }
+
+        function finishTitleEdit() {
+            state.appTitle = inputEl.value;
+            displayEl.textContent = state.appTitle;
+            displayEl.classList.remove('hidden');
+            inputEl.classList.add('hidden');
+            saveBtn.classList.add('hidden');
+            scheduleSave();
+        }
+
+        // Privacy Toggle
+        const privacyBtn = document.getElementById('privacy-btn');
+        if (privacyBtn) {
+            privacyBtn.addEventListener('click', () => {
+                state.isPrivacyMode = !state.isPrivacyMode;
+                renderAll();
+            });
+        }
+
+        // Modal Controls
+        const addBtn = document.getElementById('add-btn');
+        if (addBtn) addBtn.addEventListener('click', () => openModal());
+        
+        const cancelBtn = document.getElementById('modal-cancel-btn');
+        if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+        
+        const modal = document.getElementById('modal');
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if(e.target.id === 'modal') closeModal();
+            });
+        }
+
+        // Form Inputs
+        const modalName = document.getElementById('modal-name');
+        if (modalName) modalName.addEventListener('input', (e) => modalForm.name = e.target.value);
+        
+        const modalAmount = document.getElementById('modal-amount');
+        if (modalAmount) modalAmount.addEventListener('input', (e) => modalForm.amount = e.target.value);
+
+        // Save Category
+        const modalSaveBtn = document.getElementById('modal-save-btn');
+        if (modalSaveBtn) {
+            modalSaveBtn.addEventListener('click', () => {
+                if (!modalForm.name) return;
+                const newAmount = Number(modalForm.amount) || 0;
+                
+                if (state.editingId) {
+                    state.categories = state.categories.map(c => 
+                        c.id === state.editingId ? { ...modalForm, id: c.id, amount: newAmount } : c
+                    );
+                } else {
+                    state.categories.push({ ...modalForm, id: Date.now().toString(), amount: newAmount });
+                }
+                
+                closeModal();
+                renderAll();
+                scheduleSave();
+            });
+        }
+
+        // Delete Category
+        const modalDeleteBtn = document.getElementById('modal-delete-btn');
+        if (modalDeleteBtn) {
+            modalDeleteBtn.addEventListener('click', () => {
+                if (state.editingId) {
+                    state.categories = state.categories.filter(c => c.id !== state.editingId);
+                    closeModal();
+                    renderAll();
+                    scheduleSave();
+                }
+            });
+        }
+
+        // Helper
+        function formatMoney(amount) {
+            return state.isPrivacyMode ? '****' : `$${amount.toLocaleString()}`;
+        }
+
+        // Start
+        init();
+
+    </script>
+</body>
+</html>
