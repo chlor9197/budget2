@@ -152,7 +152,7 @@
             <div id="auth-error" class="text-red-500 text-xs mt-3 hidden text-center font-bold"></div>
             <button onclick="window.handleLogin()" class="w-full mt-6 py-3 bg-pink-500 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-transform">登入</button>
             <button onclick="window.handleSignup()" class="w-full mt-3 py-3 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold rounded-xl">註冊新帳號</button>
-            <div class="mt-6 text-center"><button onclick="window.startGuestMode()" class="text-xs text-slate-400 underline">離線試用</button></div>
+            <div class="mt-6 text-center"><button onclick="window.startGuestMode()" class="text-xs text-slate-400 underline hover:text-slate-600">免註冊登入 (匿名雲端存檔)</button></div>
         </div>
     </div>
 
@@ -443,8 +443,9 @@
 
     <!-- 邏輯腳本 -->
     <script>
-        const firebaseConfig = { apiKey: "AIzaSyD6HngA3NX5sMW6jSvDE0b90ozr_cw0yCk", authDomain: "budget-70835.firebaseapp.com", projectId: "budget-70835", storageBucket: "budget-70835.firebasestorage.app", messagingSenderId: "780821810140", appId: "1:780821810140:web:e8cc10ae8bb8bd7b10dd19", measurementId: "G-PVVY6Z5JV4" };
-        const APP_ID = 'budget-app-deploy'; 
+        // FIREBASE CONFIGURATION UPDATED TO USE ENVIRONMENT VARIABLE
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const APP_ID = typeof __app_id !== 'undefined' ? __app_id : 'budget-app-deploy'; 
         const COLORS = ['#FCA5A5', '#FDBA74', '#FDE047', '#86EFAC', '#93C5FD', '#C4B5FD', '#F9A8D4', '#CBD5E1'];
         const ICONS = ['wallet', 'home', 'coffee', 'smartphone', 'shopping-bag', 'heart', 'plane', 'gift', 'music', 'sparkles', 'clapperboard', 'bus'];
         
@@ -515,11 +516,18 @@
 
             if(auth) {
                 auth.onAuthStateChanged((user) => {
-                    if(user) { state.user = user; state.isOffline = false; document.getElementById('auth-overlay').classList.add('hidden'); setupDataListener(user.uid); }
-                    else { document.getElementById('auth-overlay').classList.remove('hidden'); }
+                    if(user) { 
+                        state.user = user; 
+                        state.isOffline = false; 
+                        document.getElementById('auth-overlay').classList.add('hidden'); 
+                        setupDataListener(user.uid); 
+                    } else { 
+                        document.getElementById('auth-overlay').classList.remove('hidden'); 
+                    }
                 });
             } else {
-                window.startGuestMode();
+                // Should not happen if config is correct, but fallback
+                window.startGuestMode(); // Fallback to offline if auth fails entirely
             }
         }
 
@@ -609,12 +617,30 @@
         window.handleLogin = () => { if(auth) auth.signInWithEmailAndPassword(document.getElementById('auth-email').value, document.getElementById('auth-password').value).catch(e => alert(e.message)); };
         window.handleSignup = () => { if(auth) auth.createUserWithEmailAndPassword(document.getElementById('auth-email').value, document.getElementById('auth-password').value).catch(e => alert(e.message)); };
         window.handleLogout = () => { if(auth) auth.signOut(); };
-        window.startGuestMode = () => { state.isOffline=true; document.getElementById('auth-overlay').classList.add('hidden'); renderAll(); };
+        
+        // ** UPDATED: Anonymous Login for Cloud Saving **
+        window.startGuestMode = () => { 
+            if(auth) {
+                auth.signInAnonymously().catch(e => {
+                    console.error("Anonymous auth failed", e);
+                    // Fallback to true offline if even anonymous fails
+                    state.isOffline=true; 
+                    document.getElementById('auth-overlay').classList.add('hidden'); 
+                    renderAll();
+                });
+            } else {
+                state.isOffline=true; 
+                document.getElementById('auth-overlay').classList.add('hidden'); 
+                renderAll(); 
+            }
+        };
         window.checkAuthStatus = () => { if(state.isOffline) document.getElementById('auth-overlay').classList.remove('hidden'); };
 
         // Data
         function setupDataListener(uid) {
             if(!db) return;
+            // Fixed path logic for compatibility with environment
+            // Using standard path for this environment if APP_ID is set
             db.collection('artifacts').doc(APP_ID).collection('users').doc(uid).collection('data').doc('budget_v2').onSnapshot((docSnap) => {
                 if(docSnap.exists) { Object.assign(state, docSnap.data()); renderAll(); }
             });
@@ -647,9 +673,11 @@
             const inc = calculateMonthlyTotalIncome();
             const exp = state.expenses.filter(e => new Date(e.date).getMonth() === state.currentDate.getMonth()).reduce((s, e) => s + Number(e.amount), 0);
             
-            const totalLiquidAssets = calculateTotalBalance();
-            document.getElementById('total-remaining-display').textContent = formatMoney(totalLiquidAssets); 
+            // ** UPDATED: Monthly Remaining = Income - Expense (as requested) **
+            const monthlyRemaining = inc - exp;
+            document.getElementById('total-remaining-display').textContent = formatMoney(monthlyRemaining); 
 
+            // Calculate savings rate
             const rate = inc > 0 ? Math.max(0, ((inc - exp)/inc)*100) : 0;
             document.getElementById('savings-rate-percent').textContent = Math.round(rate) + '%';
             document.getElementById('main-progress-bar').style.width = Math.min(100, rate) + '%';
