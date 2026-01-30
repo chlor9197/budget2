@@ -3,6 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- PWA 設置：隱藏網址列 (需加入主畫面) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#FFF0F5">
+    
     <title>可愛預算小管家 (PRO升級版)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -21,6 +27,15 @@
                     },
                     animation: {
                         'bounce-slow': 'bounce 3s infinite',
+                        'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
+                    },
+                    keyframes: {
+                        shake: {
+                            '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
+                            '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
+                            '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
+                            '40%, 60%': { transform: 'translate3d(4px, 0, 0)' }
+                        }
                     }
                 }
             }
@@ -72,9 +87,59 @@
         .modal-body { padding: 1.25rem; overflow-y: auto; flex: 1; min-height: 0; }
         .modal-footer { padding: 1rem 1.25rem; flex-shrink: 0; border-top: 1px solid rgba(0,0,0,0.05); }
         .calendar-day { min-height: 4rem; transition: background-color 0.2s; }
+
+        /* PIN Pad Styles */
+        .pin-dot { width: 12px; height: 12px; border-radius: 50%; background-color: #cbd5e1; transition: background-color 0.2s; }
+        .pin-dot.filled { background-color: #3b82f6; }
+        .pin-key { 
+            width: 64px; height: 64px; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 1.5rem; font-weight: bold; 
+            background-color: rgba(255,255,255,0.8); 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: all 0.1s; cursor: pointer; user-select: none;
+        }
+        .dark .pin-key { background-color: #1e293b; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        .pin-key:active { transform: scale(0.95); background-color: #f1f5f9; }
+        .dark .pin-key:active { background-color: #334155; }
     </style>
 </head>
 <body class="bg-[#FFF0F5] text-slate-700 pb-24 transition-colors duration-300 dark:bg-dark-bg dark:text-dark-text selection:bg-pink-200 flex justify-center min-h-screen">
+
+    <!-- 鎖定畫面 (密碼鎖) -->
+    <div id="lock-screen" class="fixed inset-0 z-[300] bg-slate-50 dark:bg-slate-900 flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="text-center space-y-8 w-full max-w-xs">
+            <div class="mb-8">
+                <div class="text-4xl mb-2">🔒</div>
+                <h2 id="pin-title" class="text-xl font-bold dark:text-white" oncontextmenu="window.resetPin(event)">請輸入密碼</h2>
+                <p id="pin-subtitle" class="text-xs text-slate-400 mt-1">保護您的財務隱私</p>
+            </div>
+            
+            <div class="flex justify-center space-x-4 mb-8">
+                <div class="pin-dot" id="dot-1"></div>
+                <div class="pin-dot" id="dot-2"></div>
+                <div class="pin-dot" id="dot-3"></div>
+                <div class="pin-dot" id="dot-4"></div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-6 justify-items-center">
+                <div class="pin-key" onclick="window.addPin(1)">1</div>
+                <div class="pin-key" onclick="window.addPin(2)">2</div>
+                <div class="pin-key" onclick="window.addPin(3)">3</div>
+                <div class="pin-key" onclick="window.addPin(4)">4</div>
+                <div class="pin-key" onclick="window.addPin(5)">5</div>
+                <div class="pin-key" onclick="window.addPin(6)">6</div>
+                <div class="pin-key" onclick="window.addPin(7)">7</div>
+                <div class="pin-key" onclick="window.addPin(8)">8</div>
+                <div class="pin-key" onclick="window.addPin(9)">9</div>
+                <div></div>
+                <div class="pin-key" onclick="window.addPin(0)">0</div>
+                <div class="flex items-center justify-center w-16 h-16 cursor-pointer" onclick="window.delPin()">
+                    <i data-lucide="delete" class="w-6 h-6 text-slate-400"></i>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- 登入頁面 -->
     <div id="auth-overlay" class="fixed inset-0 z-[200] bg-[#FFF0F5] dark:bg-dark-bg flex flex-col items-center justify-center p-6 hidden">
@@ -138,6 +203,9 @@
                             <div class="flex items-baseline space-x-1">
                                 <span class="text-xs text-slate-400 dark:text-slate-500">本月可用餘額</span>
                                 <span id="total-remaining-display" class="text-3xl font-extrabold text-slate-700 dark:text-white">0</span>
+                                <button onclick="window.togglePrivacy()" class="ml-1 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+                                    <i id="eye-icon" data-lucide="eye" class="w-4 h-4"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -175,6 +243,19 @@
                 </div>
                 <!-- 1. 預算 -->
                 <div id="view-list" class="hidden animate-slide-up space-y-4">
+                    <!-- 預算總覽卡片 -->
+                    <div class="bg-gradient-to-r from-pink-500 to-rose-400 p-4 rounded-2xl text-white shadow-lg mb-4">
+                        <div class="flex justify-between items-center mb-1">
+                            <div class="text-xs font-bold opacity-80">本月尚未分配的收入</div>
+                            <i data-lucide="pie-chart" class="w-4 h-4 opacity-70"></i>
+                        </div>
+                        <div id="unallocated-income" class="text-3xl font-black">$0</div>
+                        <div class="mt-2 text-[10px] flex justify-between opacity-70 border-t border-white/20 pt-2">
+                            <span id="total-income-budget-view">本月收入: $0</span>
+                            <span id="total-allocated-view">已分配預算: $0</span>
+                        </div>
+                    </div>
+
                     <div class="flex items-center justify-between px-1"><h2 class="text-sm font-bold text-slate-500">類別預算</h2><button onclick="window.openModal()" class="text-xs font-bold text-pink-500 bg-white dark:bg-dark-card px-2 py-1 rounded-lg shadow-sm border border-pink-100">+ 新增</button></div>
                     <div id="category-list" class="space-y-3"></div>
                 </div>
@@ -378,9 +459,14 @@
         let state = {
             user: null, isOffline: false, currentDate: new Date(), viewMode: 'list', isDarkMode: localStorage.getItem('darkMode')==='true',
             accounts: [], categories: [], fixedExpenses: [], incomes: [], expenses: [], transfers: [], debts: [], 
-            appTitle: "2026 小富婆計畫", isPrivacyMode: false, editingId: null, editingAccId: null
+            appTitle: "2026 小富婆計畫", isPrivacyMode: false, editingId: null, editingAccId: null,
+            isLocked: true // Default locked state
         };
         let charts = {};
+        
+        // --- PIN Code Variables ---
+        let pinInput = "";
+        let savedPin = localStorage.getItem('budget_app_pin');
         
         // --- 核心變數與函數 ---
         let currentEditingWishId = null;
@@ -392,7 +478,10 @@
         let currentSelectedExpCat = null;
 
         function uuid() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
-        function formatMoney(n) { return state.isPrivacyMode ? '****' : `$${Number(n).toLocaleString()}`; }
+        function formatMoney(n) { 
+            if(state.isPrivacyMode) return '****';
+            return `$${Number(n).toLocaleString()}`; 
+        }
         function calculateMonthlyTotalIncome() {
             const y = state.currentDate.getFullYear(), m = state.currentDate.getMonth();
             return state.incomes.filter(i => { const d = new Date(i.date); return d.getFullYear() === y && d.getMonth() === m; }).reduce((s, i) => s + Number(i.amount), 0);
@@ -413,6 +502,17 @@
             }
             renderAll();
             
+            // Check Lock Screen
+            if(!state.isLocked) {
+                document.getElementById('lock-screen').classList.add('hidden');
+            } else {
+                renderPinDots();
+                if(!savedPin) {
+                    document.getElementById('pin-title').textContent = "設定新密碼";
+                    document.getElementById('pin-subtitle').textContent = "請輸入4位數字";
+                }
+            }
+
             if(auth) {
                 auth.onAuthStateChanged((user) => {
                     if(user) { state.user = user; state.isOffline = false; document.getElementById('auth-overlay').classList.add('hidden'); setupDataListener(user.uid); }
@@ -422,6 +522,88 @@
                 window.startGuestMode();
             }
         }
+
+        // --- PIN Code Logic ---
+        window.addPin = (num) => {
+            if(pinInput.length < 4) {
+                pinInput += num;
+                renderPinDots();
+                if(pinInput.length === 4) {
+                    setTimeout(window.checkPin, 200);
+                }
+            }
+        };
+        window.delPin = () => {
+            pinInput = pinInput.slice(0, -1);
+            renderPinDots();
+        };
+        window.resetPin = (e) => {
+            if(e) e.preventDefault();
+            if(confirm("重設密碼？(這將清除現有的鎖定密碼)")) {
+                localStorage.removeItem('budget_app_pin');
+                savedPin = null;
+                pinInput = "";
+                document.getElementById('pin-title').textContent = "設定新密碼";
+                renderPinDots();
+            }
+        };
+        
+        function renderPinDots() {
+            for(let i=1; i<=4; i++) {
+                const dot = document.getElementById(`dot-${i}`);
+                if(i <= pinInput.length) dot.classList.add('filled');
+                else dot.classList.remove('filled');
+            }
+        }
+        
+        window.checkPin = () => {
+            const screen = document.getElementById('lock-screen');
+            const title = document.getElementById('pin-title');
+            
+            if(!savedPin) {
+                // Setting new PIN
+                localStorage.setItem('budget_app_pin', pinInput);
+                savedPin = pinInput;
+                title.textContent = "密碼已設定！";
+                title.className = "text-xl font-bold text-green-500 animate-pulse";
+                setTimeout(() => {
+                    screen.classList.add('hidden');
+                    state.isLocked = false;
+                }, 800);
+            } else {
+                // Checking PIN
+                if(pinInput === savedPin) {
+                    title.textContent = "解鎖成功";
+                    title.className = "text-xl font-bold text-green-500 animate-pulse";
+                    setTimeout(() => {
+                        screen.classList.add('hidden');
+                        state.isLocked = false;
+                    }, 500);
+                } else {
+                    title.textContent = "密碼錯誤";
+                    title.className = "text-xl font-bold text-red-500 animate-shake";
+                    pinInput = "";
+                    setTimeout(() => {
+                        title.className = "text-xl font-bold dark:text-white";
+                        title.textContent = "請輸入密碼";
+                        renderPinDots();
+                    }, 1000);
+                }
+            }
+        };
+
+        window.togglePrivacy = () => {
+            state.isPrivacyMode = !state.isPrivacyMode;
+            // Update Icon
+            const icon = document.getElementById('eye-icon');
+            if(state.isPrivacyMode) {
+                icon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                icon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+            renderAll();
+        };
 
         // Auth
         window.handleLogin = () => { if(auth) auth.signInWithEmailAndPassword(document.getElementById('auth-email').value, document.getElementById('auth-password').value).catch(e => alert(e.message)); };
@@ -450,8 +632,9 @@
         }
 
         function calculateTotalBalance() {
+            if(!state.accounts || state.accounts.length === 0) return 0;
             return state.accounts
-                .filter(acc => !acc.isHidden) // Only sum accounts that are NOT hidden
+                .filter(acc => !acc.isHidden) 
                 .reduce((total, acc) => total + getAccountBalance(acc.id), 0);
         }
 
@@ -461,30 +644,11 @@
             document.getElementById('current-month-display').textContent = `${y}年 ${m}月`;
             document.getElementById('income-display').textContent = formatMoney(calculateMonthlyTotalIncome());
             
-            // Logic change: Use calculateTotalBalance for "Total Remaining" 
-            // NOTE: Original "Remaining" logic was Income - Expense. 
-            // The user requested "When income/balance is zero, account total should be zero". 
-            // This implies the main display should reflect ACTUAL money, not just monthly budget remaining.
-            // However, "本月結餘" usually means Monthly Income - Monthly Expense.
-            // Let's change the label to "本月可用餘額" (Monthly Available) or just show Total Assets if preferred.
-            // Given the request, I'll stick to Monthly logic for the card but Ensure account logic is solid.
-            // User said: "When income and balance zero, account total should zero". This means if I delete data, it zeros out.
-            
             const inc = calculateMonthlyTotalIncome();
             const exp = state.expenses.filter(e => new Date(e.date).getMonth() === state.currentDate.getMonth()).reduce((s, e) => s + Number(e.amount), 0);
             
-            // Update: Total Remaining Display now shows sum of ACTIVE accounts (liquid assets)
-            // Or keep it as Monthly Budget? User said "Account total should zero".
-            // Let's make the main display show "Total Liquid Assets" instead of just monthly savings?
-            // Actually, usually these apps show "Monthly Remaining". Let's update the label to be safe.
-            // But for now, let's keep the logic:
-            
-            // Recalculate everything based on current data
             const totalLiquidAssets = calculateTotalBalance();
             document.getElementById('total-remaining-display').textContent = formatMoney(totalLiquidAssets); 
-            // Changed from (inc-exp) to totalLiquidAssets to satisfy "Account total" request.
-            // Also changed label in HTML to "本月可用餘額" -> "總資產" or just keep it and let user know.
-            // Reverting label to "本月可用餘額" is safer, but displaying Total Balance is what was requested implicitly.
 
             const rate = inc > 0 ? Math.max(0, ((inc - exp)/inc)*100) : 0;
             document.getElementById('savings-rate-percent').textContent = Math.round(rate) + '%';
@@ -506,6 +670,11 @@
             if(state.viewMode === 'wishlist') renderWishlist();
             if(state.viewMode === 'debts') renderDebts();
             
+            // Check privacy mode for eye icon
+            const icon = document.getElementById('eye-icon');
+            if(state.isPrivacyMode) icon.setAttribute('data-lucide', 'eye-off');
+            else icon.setAttribute('data-lucide', 'eye');
+
             lucide.createIcons();
         }
 
@@ -524,6 +693,12 @@
 
         function renderAssets() {
             const list = document.getElementById('accounts-list'); list.innerHTML = '';
+            
+            if(state.accounts.length === 0) {
+                 list.innerHTML = '<div class="text-center text-slate-400 py-10">尚無帳戶</div>';
+                 return;
+            }
+
             state.accounts.forEach(acc => {
                 const bal = getAccountBalance(acc.id);
                 const div = document.createElement('div');
@@ -750,7 +925,7 @@
                              <div class="p-1 bg-indigo-100 rounded text-indigo-500"><i data-lucide="piggy-bank" class="w-4 h-4"></i></div>
                             <span class="font-bold text-slate-700 dark:text-white text-sm ml-2">${acc.name}</span>
                         </div>
-                        <div class="text-xs font-bold dark:text-slate-200">$${bal} / $${goal}</div>
+                        <div class="text-xs font-bold dark:text-slate-200">${formatMoney(bal)} / ${formatMoney(goal)}</div>
                     </div>
                     <div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mb-3">
                         <div class="h-full bg-indigo-400" style="width:${pct}%"></div>
@@ -808,14 +983,34 @@
         
         function renderBudget() {
             const list = document.getElementById('category-list'); list.innerHTML = '';
+            
+            // Calculate Total Budget Stats
+            let totalBudget = 0;
+            // Removed 'totalSpent' as per user request to show UNALLOCATED INCOME, not REMAINING BUDGET
+            
+            const m = state.currentDate.getMonth(), y = state.currentDate.getFullYear();
+            const totalIncome = calculateMonthlyTotalIncome();
+
             state.categories.forEach(cat => {
-                const { remaining, percentage } = getCategoryStats(cat.id, state.currentDate);
+                totalBudget += Number(cat.amount);
+                const monthExpenses = state.expenses.filter(e => { const d = new Date(e.date); return d.getFullYear() === y && d.getMonth() === m && e.catId === cat.id; });
+                const spent = monthExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
+
+                const remaining = Number(cat.amount) - spent;
+                const percentage = Number(cat.amount) > 0 ? (spent / Number(cat.amount)) * 100 : 0;
+                
                 const div = document.createElement('div');
                 div.className = "bg-white dark:bg-dark-card p-4 rounded-2xl shadow-sm border dark:border-slate-700 cursor-pointer";
                 div.innerHTML = `<div class="flex justify-between mb-2 font-bold"><span class="dark:text-white">${cat.name}</span><span class="${remaining<0?'text-red-500':'text-slate-700 dark:text-slate-200'}">剩 ${formatMoney(remaining)}</span></div><div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full"><div class="h-full rounded-full ${remaining<0?'bg-red-400':''}" style="width:${Math.min(100, percentage)}%; background-color:${remaining<0?'':cat.color}"></div></div>`;
                 div.onclick = () => window.openEditCategory(cat.id);
                 list.appendChild(div);
             });
+
+            // Update Summary Card - NEW LOGIC (Income - Allocated)
+            const unallocated = totalIncome - totalBudget;
+            document.getElementById('unallocated-income').textContent = formatMoney(unallocated);
+            document.getElementById('total-income-budget-view').textContent = `本月收入: ${formatMoney(totalIncome)}`;
+            document.getElementById('total-allocated-view').textContent = `已分配預算: ${formatMoney(totalBudget)}`;
         }
         
         function renderLedger() {
@@ -965,8 +1160,15 @@
                 div.innerHTML = `<div class="flex justify-between text-xs font-bold text-slate-400 mb-2 px-1"><span>${person}</span><span class="${net>=0?'text-green-500':'text-red-500'}">結算 ${formatMoney(net)}</span></div>`;
                 items.forEach(d => {
                     const item = document.createElement('div');
-                    item.className = `flex justify-between items-center p-2 rounded-xl mb-1 ${d.type==='lent'?'bg-green-50':'bg-red-50'}`;
-                    item.innerHTML = `<div class="text-sm font-bold">${d.note || '款項'}</div><div class="flex items-center space-x-2"><span class="font-black">${d.amount}</span><button onclick="window.deleteDebt(event, '${d.id}')" class="text-slate-400 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`;
+                    // Improved Dark Mode Contrast
+                    item.className = `flex justify-between items-center p-2 rounded-xl mb-1 ${d.type==='lent'?'bg-green-50 dark:bg-green-900/20':'bg-red-50 dark:bg-red-900/20'}`;
+                    item.innerHTML = `
+                        <div class="text-sm font-bold dark:text-slate-200">${d.note || '款項'}</div>
+                        <div class="flex items-center space-x-2">
+                            <span class="font-black dark:text-slate-100">${formatMoney(d.amount)}</span>
+                            <button onclick="window.deleteDebt(event, '${d.id}')" class="text-slate-400 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    `;
                     item.onclick = (e) => { if(e.target.tagName !== 'I' && e.target.tagName !== 'BUTTON') window.openDebtModal(d.id); };
                     div.appendChild(item);
                 });
