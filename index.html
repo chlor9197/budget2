@@ -88,7 +88,7 @@
         .modal-footer { padding: 1rem 1.25rem; flex-shrink: 0; border-top: 1px solid rgba(0,0,0,0.05); }
         .calendar-day { min-height: 4rem; transition: background-color 0.2s; }
 
-        /* PIN Pad Styles */
+        /* PIN Pad Styles - Optimized for Mobile Buttons */
         .pin-dot { width: 12px; height: 12px; border-radius: 50%; background-color: #cbd5e1; transition: background-color 0.2s; }
         .pin-dot.filled { background-color: #3b82f6; }
         .pin-key { 
@@ -98,6 +98,8 @@
             background-color: rgba(255,255,255,0.8); 
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             transition: all 0.1s; cursor: pointer; user-select: none;
+            border: none; outline: none; touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
         .dark .pin-key { background-color: #1e293b; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         .pin-key:active { transform: scale(0.95); background-color: #f1f5f9; }
@@ -123,17 +125,18 @@
             </div>
 
             <div class="grid grid-cols-3 gap-6 justify-items-center">
-                <div class="pin-key" onclick="window.addPin(1)">1</div>
-                <div class="pin-key" onclick="window.addPin(2)">2</div>
-                <div class="pin-key" onclick="window.addPin(3)">3</div>
-                <div class="pin-key" onclick="window.addPin(4)">4</div>
-                <div class="pin-key" onclick="window.addPin(5)">5</div>
-                <div class="pin-key" onclick="window.addPin(6)">6</div>
-                <div class="pin-key" onclick="window.addPin(7)">7</div>
-                <div class="pin-key" onclick="window.addPin(8)">8</div>
-                <div class="pin-key" onclick="window.addPin(9)">9</div>
+                <!-- Changed to button for better mobile touch support -->
+                <button class="pin-key" onclick="window.addPin(1)">1</button>
+                <button class="pin-key" onclick="window.addPin(2)">2</button>
+                <button class="pin-key" onclick="window.addPin(3)">3</button>
+                <button class="pin-key" onclick="window.addPin(4)">4</button>
+                <button class="pin-key" onclick="window.addPin(5)">5</button>
+                <button class="pin-key" onclick="window.addPin(6)">6</button>
+                <button class="pin-key" onclick="window.addPin(7)">7</button>
+                <button class="pin-key" onclick="window.addPin(8)">8</button>
+                <button class="pin-key" onclick="window.addPin(9)">9</button>
                 <div></div>
-                <div class="pin-key" onclick="window.addPin(0)">0</div>
+                <button class="pin-key" onclick="window.addPin(0)">0</button>
                 <div class="flex items-center justify-center w-16 h-16 cursor-pointer" onclick="window.delPin()">
                     <i data-lucide="delete" class="w-6 h-6 text-slate-400"></i>
                 </div>
@@ -443,9 +446,21 @@
 
     <!-- 邏輯腳本 -->
     <script>
-        // FIREBASE CONFIGURATION UPDATED TO USE ENVIRONMENT VARIABLE
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const APP_ID = typeof __app_id !== 'undefined' ? __app_id : 'budget-app-deploy'; 
+        // Firebase Config Setup with Fallback
+        let firebaseConfig, APP_ID;
+        try {
+            if (typeof __firebase_config !== 'undefined') {
+                firebaseConfig = JSON.parse(__firebase_config);
+                APP_ID = typeof __app_id !== 'undefined' ? __app_id : 'budget-app-deploy';
+            } else {
+                throw new Error('Env vars not found');
+            }
+        } catch (e) {
+            // Fallback for local usage
+            firebaseConfig = { apiKey: "AIzaSyD6HngA3NX5sMW6jSvDE0b90ozr_cw0yCk", authDomain: "budget-70835.firebaseapp.com", projectId: "budget-70835", storageBucket: "budget-70835.firebasestorage.app", messagingSenderId: "780821810140", appId: "1:780821810140:web:e8cc10ae8bb8bd7b10dd19", measurementId: "G-PVVY6Z5JV4" };
+            APP_ID = 'budget-app-deploy';
+        }
+        
         const COLORS = ['#FCA5A5', '#FDBA74', '#FDE047', '#86EFAC', '#93C5FD', '#C4B5FD', '#F9A8D4', '#CBD5E1'];
         const ICONS = ['wallet', 'home', 'coffee', 'smartphone', 'shopping-bag', 'heart', 'plane', 'gift', 'music', 'sparkles', 'clapperboard', 'bus'];
         
@@ -526,8 +541,8 @@
                     }
                 });
             } else {
-                // Should not happen if config is correct, but fallback
-                window.startGuestMode(); // Fallback to offline if auth fails entirely
+                // Fallback to offline if auth fails entirely
+                window.startGuestMode(); 
             }
         }
 
@@ -620,18 +635,16 @@
         
         // ** UPDATED: Anonymous Login for Cloud Saving **
         window.startGuestMode = () => { 
+            state.isOffline = true;
+            document.getElementById('auth-overlay').classList.add('hidden');
+            updateSaveStatus('saved-local');
+            renderAll();
+            
+            // Try to auth in background if possible, but don't block
             if(auth) {
                 auth.signInAnonymously().catch(e => {
-                    console.error("Anonymous auth failed", e);
-                    // Fallback to true offline if even anonymous fails
-                    state.isOffline=true; 
-                    document.getElementById('auth-overlay').classList.add('hidden'); 
-                    renderAll();
+                    console.log("Background auth failed, staying offline", e);
                 });
-            } else {
-                state.isOffline=true; 
-                document.getElementById('auth-overlay').classList.add('hidden'); 
-                renderAll(); 
             }
         };
         window.checkAuthStatus = () => { if(state.isOffline) document.getElementById('auth-overlay').classList.remove('hidden'); };
@@ -641,19 +654,55 @@
             if(!db) return;
             // Fixed path logic for compatibility with environment
             // Using standard path for this environment if APP_ID is set
-            db.collection('artifacts').doc(APP_ID).collection('users').doc(uid).collection('data').doc('budget_v2').onSnapshot((docSnap) => {
-                if(docSnap.exists) { Object.assign(state, docSnap.data()); renderAll(); }
-            });
+            try {
+                db.collection('artifacts').doc(APP_ID).collection('users').doc(uid).collection('data').doc('budget_v2').onSnapshot((docSnap) => {
+                    if(docSnap.exists) { 
+                        // Merge cloud data with local state carefully, or just overwrite
+                        Object.assign(state, docSnap.data()); 
+                        state.isOffline = false;
+                        renderAll(); 
+                        updateSaveStatus('saved');
+                    }
+                }, (error) => {
+                    console.error("Firestore listener error:", error);
+                    // Fallback to offline if listener fails (e.g. quota exceeded)
+                    state.isOffline = true;
+                    updateSaveStatus('error');
+                });
+            } catch (e) {
+                console.error("Setup listener failed", e);
+                state.isOffline = true;
+            }
         }
-        function loadFromLocal() { const d = JSON.parse(localStorage.getItem('budget_v2_local')); if(d) Object.assign(state, d); }
+        function loadFromLocal() { 
+            try {
+                const d = JSON.parse(localStorage.getItem('budget_v2_local')); 
+                if(d) Object.assign(state, d); 
+            } catch(e) { console.error("Load local failed", e); }
+        }
         let saveTimer;
         function scheduleSave() {
             updateSaveStatus('saving'); clearTimeout(saveTimer);
             saveTimer = setTimeout(async () => {
-                localStorage.setItem('budget_v2_local', JSON.stringify(state));
-                if(state.user && !state.isOffline && db) {
-                    try { await db.collection('artifacts').doc(APP_ID).collection('users').doc(state.user.uid).collection('data').doc('budget_v2').set(state, {merge:true}); updateSaveStatus('saved'); } catch(e) { updateSaveStatus('error'); }
-                } else { updateSaveStatus('saved-local'); }
+                try {
+                    localStorage.setItem('budget_v2_local', JSON.stringify(state));
+                    
+                    if(state.user && !state.isOffline && db) {
+                        try { 
+                            await db.collection('artifacts').doc(APP_ID).collection('users').doc(state.user.uid).collection('data').doc('budget_v2').set(state, {merge:true}); 
+                            updateSaveStatus('saved'); 
+                        } catch(e) { 
+                            console.error("Cloud save failed", e);
+                            updateSaveStatus('saved-local'); // Fallback status
+                            // Don't force isOffline=true here to allow retry, but indicate local save only
+                        }
+                    } else { 
+                        updateSaveStatus('saved-local'); 
+                    }
+                } catch (e) {
+                    console.error("Save failed completely", e);
+                    updateSaveStatus('error');
+                }
             }, 1000);
         }
 
@@ -1175,173 +1224,7 @@
             }
         }
 
-        function renderDebts() {
-            const list = document.getElementById('debt-list'); list.innerHTML = '';
-            const tLent = state.debts.filter(d=>d.type==='lent').reduce((s,d)=>s+Number(d.amount),0);
-            const tOwe = state.debts.filter(d=>d.type==='borrowed').reduce((s,d)=>s+Number(d.amount),0);
-            document.getElementById('debt-lent-total').textContent = formatMoney(tLent); document.getElementById('debt-owe-total').textContent = formatMoney(tOwe);
-            const grouped = state.debts.reduce((acc, d) => { if(!acc[d.name]) acc[d.name] = []; acc[d.name].push(d); return acc; }, {});
-            Object.entries(grouped).forEach(([person, items]) => {
-                const net = items.reduce((s, d) => s + (d.type==='lent'?Number(d.amount):-Number(d.amount)), 0);
-                const div = document.createElement('div');
-                div.className = "mb-4 bg-white dark:bg-dark-card p-3 rounded-2xl border dark:border-slate-800";
-                div.innerHTML = `<div class="flex justify-between text-xs font-bold text-slate-400 mb-2 px-1"><span>${person}</span><span class="${net>=0?'text-green-500':'text-red-500'}">結算 ${formatMoney(net)}</span></div>`;
-                items.forEach(d => {
-                    const item = document.createElement('div');
-                    // Improved Dark Mode Contrast
-                    item.className = `flex justify-between items-center p-2 rounded-xl mb-1 ${d.type==='lent'?'bg-green-50 dark:bg-green-900/20':'bg-red-50 dark:bg-red-900/20'}`;
-                    item.innerHTML = `
-                        <div class="text-sm font-bold dark:text-slate-200">${d.note || '款項'}</div>
-                        <div class="flex items-center space-x-2">
-                            <span class="font-black dark:text-slate-100">${formatMoney(d.amount)}</span>
-                            <button onclick="window.deleteDebt(event, '${d.id}')" class="text-slate-400 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                        </div>
-                    `;
-                    item.onclick = (e) => { if(e.target.tagName !== 'I' && e.target.tagName !== 'BUTTON') window.openDebtModal(d.id); };
-                    div.appendChild(item);
-                });
-                list.appendChild(div);
-            });
-            lucide.createIcons();
-        }
-
-        function renderCalendar() {
-            const grid = document.getElementById('calendar-grid'); grid.innerHTML = '';
-            const y = state.currentDate.getFullYear(), m = state.currentDate.getMonth();
-            const first = new Date(y, m, 1).getDay(), last = new Date(y, m+1, 0).getDate();
-            for(let i=0; i<first; i++) grid.appendChild(document.createElement('div'));
-            for(let d=1; d<=last; d++) {
-                const cell = document.createElement('div');
-                cell.className = "calendar-day border border-slate-50 dark:border-slate-800 rounded-lg p-1 flex flex-col items-center cursor-pointer hover:bg-pink-50";
-                cell.onclick = () => window.openDayDetail(d);
-                const hasI = state.incomes.some(i => new Date(i.date).getDate()===d && new Date(i.date).getMonth()===m);
-                const hasE = state.expenses.some(e => new Date(e.date).getDate()===d && new Date(e.date).getMonth()===m);
-                cell.innerHTML = `<span class="text-[10px] font-bold text-slate-400">${d}</span><div class="flex space-x-0.5 mt-1">${hasI?'<div class="w-1 h-1 rounded-full bg-green-500"></div>':''}${hasE?'<div class="w-1 h-1 rounded-full bg-red-500"></div>':''}</div>`;
-                grid.appendChild(cell);
-            }
-        }
-
-        // --- 全域按鈕邏輯 ---
-        window.deleteDebt = (e, id) => { 
-            if(e) e.stopPropagation(); 
-            if(confirm('確定刪除？')) { state.debts = state.debts.filter(d=>d.id!==id); renderDebts(); scheduleSave(); } 
-        };
-        window.openDebtModal = (id) => {
-            const d = id ? state.debts.find(x=>x.id===id) : null;
-            openModalById('modal-debt');
-            let form = d || { id: null, name: '', amount: '', note: '', type: 'lent' };
-            document.getElementById('debt-input-name').value = form.name;
-            document.getElementById('debt-input-amount').value = form.amount;
-            document.getElementById('debt-input-note').value = form.note;
-            currentEditingDebtId = form.id;
-            setDebtType(form.type);
-            document.getElementById('btn-debt-delete').classList.toggle('hidden', !form.id);
-        };
-        window.handleSaveDebt = () => {
-            const n = document.getElementById('debt-input-name').value, a = document.getElementById('debt-input-amount').value, note = document.getElementById('debt-input-note').value;
-            if(!n || !a) return;
-            const data = { id: currentEditingDebtId || uuid(), name: n, amount: Number(a), note, type: currentDebtType };
-            if(currentEditingDebtId) state.debts = state.debts.map(d => d.id === currentEditingDebtId ? data : d); else state.debts.push(data);
-            closeModal('modal-debt'); renderDebts(); scheduleSave();
-        };
-        window.handleDeleteDebt = () => { if(confirm('確定刪除此紀錄？')) { state.debts = state.debts.filter(d=>d.id !== currentEditingDebtId); window.closeModal('modal-debt'); renderDebts(); scheduleSave(); }};
-        window.setDebtType = (type) => { currentDebtType=type; document.querySelectorAll('.debt-type-btn').forEach(b => b.className = `debt-type-btn flex-1 py-2 rounded-xl text-xs font-bold transition-all ${b.textContent.includes(type==='lent'?'別人欠我':'我欠別人') ? 'bg-pink-50 border-pink-500 text-pink-600' : 'border-slate-200 text-slate-400'}`); };
-        
-        window.setAccType = (type) => { 
-            currentAccType = type; 
-            document.querySelectorAll('.acc-type-btn').forEach(b => {
-                const isSelected = (type === 'general' && b.id === 'acc-type-general') || (type === 'savings' && b.id === 'acc-type-savings');
-                b.className = `acc-type-btn flex-1 py-3 border rounded-xl transition-all font-bold text-sm ${isSelected ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-400 border-slate-200'}`;
-            });
-        };
-
-        window.deleteFixed = (e, id) => { if(e) e.stopPropagation(); state.fixedExpenses = state.fixedExpenses.filter(x=>x.id!==id); renderFixedList(); scheduleSave(); };
-        
-        window.openModal = () => { state.editingId = null; window.openModalById('modal-category'); document.getElementById('btn-cat-delete').classList.add('hidden'); document.getElementById('cat-modal-name').value=''; document.getElementById('cat-modal-amount').value=''; renderCatPickers(COLORS[0], ICONS[0]); };
-        window.openEditCategory = (id) => {
-            const cat = state.categories.find(c=>c.id===id);
-            state.editingId = cat.id; 
-            openModalById('modal-category');
-            document.getElementById('btn-cat-delete').classList.remove('hidden');
-            document.getElementById('cat-modal-name').value = cat.name;
-            document.getElementById('cat-modal-amount').value = cat.amount;
-            renderCatPickers(cat.color, cat.icon);
-        };
-        window.handleSaveCategory = () => {
-            const n = document.getElementById('cat-modal-name').value, a = document.getElementById('cat-modal-amount').value;
-            if(!n || !a) return;
-            const data = { id: state.editingId || uuid(), name: n, amount: Number(a), color: currentSelectedColor, icon: currentSelectedIcon };
-            if(state.editingId) state.categories = state.categories.map(c => c.id === state.editingId ? data : c); else state.categories.push(data);
-            window.closeModal('modal-category'); renderAll(); scheduleSave();
-        };
-        
-        window.handleDeleteCategory = () => {
-            if(confirm('確定刪除此類別？\n注意：這會一併移除該類別的所有支出紀錄！')) {
-                state.categories = state.categories.filter(c => c.id !== state.editingId);
-                state.expenses = state.expenses.filter(e => e.catId !== state.editingId);
-                window.closeModal('modal-category'); renderAll(); scheduleSave();
-            }
-        };
-
-        // ... Other Buttons ...
-        window.openIncomeModal = () => { populateAccountSelect('inc-input-acc'); document.getElementById('inc-input-date').valueAsDate = new Date(); window.openModalById('modal-income'); };
-        window.openExpenseModal = () => { populateAccountSelect('exp-input-acc'); renderExpCatPicker(); document.getElementById('exp-input-date').valueAsDate = new Date(); window.openModalById('modal-expense'); };
-        window.openTransferModal = () => { populateAccountSelect('trans-from'); populateAccountSelect('trans-to'); window.openModalById('transfer-modal'); };
-        
-        window.handleSaveIncome = () => {
-            const acc = document.getElementById('inc-input-acc').value, name = document.getElementById('inc-input-name').value, amt = document.getElementById('inc-input-amount').value, date = document.getElementById('inc-input-date').valueAsDate || new Date();
-            if(!name || !amt) return;
-            state.incomes.push({id:uuid(), name, amount:Number(amt), accountId:acc, date:date.toISOString()});
-            window.closeModal('modal-income'); renderAll(); scheduleSave();
-        };
-        window.handleSaveExpense = () => {
-            const acc = document.getElementById('exp-input-acc').value, amt = document.getElementById('exp-input-amount').value, date = document.getElementById('exp-input-date').valueAsDate || new Date(), note = document.getElementById('exp-input-note').value;
-            if(!amt || !currentSelectedExpCat) return;
-            state.expenses.push({id:uuid(), catId:currentSelectedExpCat, amount:Number(amt), note, accountId:acc, date:date.toISOString()});
-            window.closeModal('modal-expense'); renderAll(); scheduleSave();
-        };
-        window.handleSaveTransfer = () => {
-            const f = document.getElementById('trans-from').value, t = document.getElementById('trans-to').value, a = document.getElementById('trans-amount').value;
-            if(f && t && a) { state.transfers.push({id:uuid(), fromId:f, toId:t, amount:Number(a), note:document.getElementById('trans-note').value, date:new Date().toISOString()}); window.closeModal('transfer-modal'); renderAll(); scheduleSave(); }
-        };
-        window.handleDeleteWish = () => { if(confirm('確定刪除？')) { state.wishes = state.wishes.filter(w=>w.id !== currentEditingWishId); window.closeModal('modal-wish'); renderWishlist(); scheduleSave(); }};
-        
-        window.openDayDetail = (d) => {
-            const m = state.currentDate.getMonth(), y = state.currentDate.getFullYear();
-            const incs = state.incomes.filter(i => new Date(i.date).getDate()===d && new Date(i.date).getMonth()===m);
-            const exps = state.expenses.filter(e => new Date(e.date).getDate()===d && new Date(e.date).getMonth()===m);
-            document.getElementById('day-detail-title').textContent = `${m+1}月${d}日 明細`;
-            const list = document.getElementById('day-detail-items'); list.innerHTML = '';
-            if(!incs.length && !exps.length) list.innerHTML = '<div class="text-center py-4 text-slate-400">無紀錄</div>';
-            incs.forEach(i => list.innerHTML += `<div class="flex justify-between p-2 bg-green-50 rounded-lg"><span>${i.name}</span><span class="text-green-600">+${formatMoney(i.amount)}</span></div>`);
-            exps.forEach(e => { const c = state.categories.find(c=>c.id===e.catId); list.innerHTML += `<div class="flex justify-between p-2 bg-red-50 rounded-lg"><span>${e.note||c?.name}</span><span class="text-red-500">-${formatMoney(e.amount)}</span></div>`; });
-            window.openModalById('modal-day-detail');
-        };
-
-        // Helper Renders
-        function renderCatPickers(c, i) {
-            currentSelectedColor = c; currentSelectedIcon = i;
-            const cp = document.getElementById('color-picker'); cp.innerHTML = '';
-            COLORS.forEach(color => { const d = document.createElement('div'); d.className = `w-8 h-8 rounded-full flex-shrink-0 cursor-pointer border-2 ${currentSelectedColor===color?'border-slate-500':'border-transparent'}`; d.style.backgroundColor = color; d.onclick = () => renderCatPickers(color, currentSelectedIcon); cp.appendChild(d); });
-            const ip = document.getElementById('icon-picker'); ip.innerHTML = '';
-            ICONS.forEach(icon => { const d = document.createElement('div'); d.className = `p-2 rounded-lg cursor-pointer ${currentSelectedIcon===icon?'bg-pink-100 text-pink-500':'text-slate-400'}`; d.innerHTML = `<i data-lucide="${icon}"></i>`; d.onclick = () => renderCatPickers(currentSelectedColor, icon); ip.appendChild(d); });
-            lucide.createIcons();
-        }
-        function populateAccountSelect(id) { const s = document.getElementById(id); s.innerHTML = ''; state.accounts.forEach(a => { const o = document.createElement('option'); o.value=a.id; o.innerText=a.name; s.appendChild(o); }); }
-        function renderExpCatPicker() {
-            const grid = document.getElementById('exp-cat-picker'); grid.innerHTML = '';
-            if(state.categories.length > 0) currentSelectedExpCat = state.categories[0].id;
-            state.categories.forEach(c => {
-                const btn = document.createElement('div');
-                btn.className = `p-2 border rounded-lg cursor-pointer flex flex-col items-center ${currentSelectedExpCat===c.id?'ring-2 ring-pink-400':'dark:border-slate-700'}`;
-                btn.innerHTML = `<i data-lucide="${c.icon}" class="w-4 h-4" style="color:${c.color}"></i><span class="text-[8px] dark:text-white mt-1">${c.name}</span>`;
-                btn.onclick = () => { document.querySelectorAll('#exp-cat-picker > div').forEach(d=>d.classList.remove('ring-2','ring-pink-300')); btn.classList.add('ring-2','ring-pink-300'); currentSelectedExpCat = c.id; };
-                grid.appendChild(btn);
-            });
-            lucide.createIcons();
-        }
-        
-        function updateSaveStatus(s) { const el = document.getElementById('cloud-status'); if(!el) return; let tx='已同步', cl='text-green-500'; if(s==='saving'){tx='儲存中';cl='text-blue-400';} else if(s==='error'){tx='錯誤';cl='text-red-500';} el.innerHTML=`<i data-lucide="cloud" class="w-3 h-3 ${cl}"></i><span class="${cl}">${tx}</span>`; lucide.createIcons(); }
+        function updateSaveStatus(s) { const el = document.getElementById('cloud-status'); if(!el) return; let tx='已同步', cl='text-green-500'; if(s==='saving'){tx='儲存中';cl='text-blue-400';} else if(s==='error'){tx='離線模式';cl='text-slate-400';} else if(s==='saved-local'){tx='本機儲存';cl='text-yellow-500';} el.innerHTML=`<i data-lucide="cloud" class="w-3 h-3 ${cl}"></i><span class="${cl}">${tx}</span>`; lucide.createIcons(); }
         function applyTheme() { if(state.isDarkMode) document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); }
         window.toggleTheme = () => { state.isDarkMode = !state.isDarkMode; localStorage.setItem('darkMode', state.isDarkMode); applyTheme(); renderAll(); };
         window.startEditTitle = () => { document.getElementById('app-title-display').classList.add('hidden'); document.getElementById('app-title-input').classList.remove('hidden'); document.getElementById('save-title-btn').classList.remove('hidden'); document.getElementById('app-title-input').focus(); };
